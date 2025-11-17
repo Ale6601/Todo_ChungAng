@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "72895086645",
+    "project_id": "todochungang",
+    "storage_bucket": "todochungang.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:72895086645:android:3b2191b5da93cf7f7c317c",
+        "android_client_info": {
+          "package_name": "kr.mobile.apps.todochungang"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "72895086645-cjngol3k57m6ul973n11b3pqr4k56d40.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "kr.mobile.apps.todochungang",
+            "certificate_hash": "2aee56cf394360dcae60a3cbf8873b1669825812"
+          }
+        },
+        {
+          "client_id": "72895086645-u9tkpaklkqpm4rqmbfcu24fqanpuhi8j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeYurZb7Cbnm51DT1iuhlrh0xchlofRK8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "72895086645-u9tkpaklkqpm4rqmbfcu24fqanpuhi8j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
