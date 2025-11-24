@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "72895086645-as44g745qm16dbvufm4obmi81klq4a0h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "kr.mobile.apps.todochungang",
+            "certificate_hash": "087449c5015fba5a1bc3b725f14e7be5785e0294"
+          }
+        },
+        {
           "client_id": "72895086645-cjngol3k57m6ul973n11b3pqr4k56d40.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
