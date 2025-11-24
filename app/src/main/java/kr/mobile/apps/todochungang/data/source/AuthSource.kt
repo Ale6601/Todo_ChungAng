@@ -42,6 +42,20 @@ class AuthSource(private val context: Context) {
         return result.user
     }
 
+    /**
+     * 새 logout 로직 (코루틴 기반, Task.await 사용)
+     */
+    suspend fun logout() {
+        // Google 계정 로그인 세션 정리
+        signInClient.signOut().await()
+        // Firebase Auth 세션 정리
+        FirebaseAuthHelper.logout()
+    }
+
+    /**
+     * 기존 방식 유지 (호환용)
+     * - 코루틴 사용 안 하고 바로 호출하는 버전
+     */
     fun signOut() {
         signInClient.signOut()
         FirebaseAuthHelper.signOut()

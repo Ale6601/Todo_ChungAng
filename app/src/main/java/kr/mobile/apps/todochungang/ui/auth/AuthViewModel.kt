@@ -51,8 +51,31 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun signOut() {
-        repo.signOut()
-        _loginState.value = UiState.Error(IllegalStateException("Signed out"))
+    /**
+     * 새로 추가한 logout 흐름
+     * - GoogleSignIn + Firebase 둘 다 로그아웃
+     * - 성공 시: loginState를 "Not logged in" 상태로 만들어서
+     *   화면에서 로그인 화면으로 보내기 좋게 처리
+     */
+    fun logout() {
+        _loginState.value = UiState.Loading
+        viewModelScope.launch {
+            when (val result = repo.logout()) {
+                is UiState.Success -> {
+                    // 더 이상 로그인된 유저가 없다는 의미로 Error 상태 사용
+                    _loginState.value = UiState.Error(IllegalStateException("Signed out"))
+                }
+                is UiState.Error -> {
+                    _loginState.value = UiState.Error(result.throwable)
+                }
+                UiState.Loading -> Unit
+            }
+        }
     }
+
+    /**
+     * 기존 signOut()을 쓰고 있는 코드가 있을 수 있으니,
+     * 호환용으로 남겨둠. 내부에서는 새 logout()을 호출.
+     */
+    fun signOut() = logout()
 }

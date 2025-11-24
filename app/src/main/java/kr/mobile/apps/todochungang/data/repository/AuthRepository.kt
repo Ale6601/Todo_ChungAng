@@ -32,6 +32,20 @@ class AuthRepository(context: Context) {
         UiState.Error(t)
     }
 
+    /**
+     * 새 logout 로직 (코루틴 기반)
+     */
+    suspend fun logout(): UiState<Unit> = try {
+        source.logout()
+        UiState.Success(Unit)
+    } catch (t: Throwable) {
+        UiState.Error(t)
+    }
+
+    /**
+     * 예전에 사용하던 signOut()이 있을 수 있어서 유지.
+     * 내부적으로는 기존 방식대로 동기 호출.
+     */
     fun signOut() {
         source.signOut()
     }
