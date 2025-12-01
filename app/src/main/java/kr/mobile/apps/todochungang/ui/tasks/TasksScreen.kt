@@ -4,8 +4,10 @@ package kr.mobile.apps.todochungang.ui.tasks
 import kr.mobile.apps.todochungang.data.Task
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column // Column import
 import androidx.compose.foundation.layout.fillMaxSize // fillMaxSize import
@@ -23,14 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog // Dialog import
 import androidx.compose.material3.CircularProgressIndicator // 로딩 인디케이터
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedTextField
@@ -40,10 +40,10 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.EditCalendar
-import androidx.compose.material.icons.filled.CalendarMonth // 세부 정보 아이콘
+import androidx.compose.material.icons.filled.Add // 세부 정보 아이콘
 import androidx.compose.material.icons.Icons // Icons.* 를 사용하기 위한 기본 import
 import androidx.compose.material.icons.filled.Close // 삭제 버튼 아이콘
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -54,32 +54,45 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.LocalTime
 import java.util.Locale
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberTimePickerState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.material3.AlertDialog // AlertDialog 사용
+import androidx.compose.foundation.layout.Box // Box 사용
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.ui.draw.rotate
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Delete
 
 private val LightGrayBackground = Color(0xFFF3F3F3)
+private val DateRangeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd")
+private fun formatTaskDateRange(startDate: LocalDate?, endDate: LocalDate?): String? {
+    // 1. 시작일이 없으면 날짜 범위를 표시할 수 없습니다.
+    if (startDate == null) return null
+
+    val startPart = startDate.format(DateRangeFormatter)
+
+    // 2. 마감일이 없거나 시작일과 같으면 시작일만 표시
+    if (endDate == null || endDate == startDate) {
+        return startPart
+    }
+
+    val endPart = endDate.format(DateRangeFormatter)
+
+    // 3. 시작일과 마감일이 다르면 범위로 표시
+    return "$startPart ~ $endPart"
+}
 @Composable
 fun TasksScreen(viewModel: TasksViewModel = viewModel()) {
 
-    // 💡 [수정] 중복된 taskTitleLoading 정의를 제거하고, isAddingTask만 남깁니다.
     val isAddingTask by viewModel.isAddingTask.collectAsState(initial = false)
-    val taskTitleLoading by viewModel.taskTitleLoading.collectAsState(initial = "") // 이 변수는 유지
+    val taskTitleLoading by viewModel.taskTitleLoading.collectAsState(initial = "")
+    val tasks by viewModel.filteredTasks.collectAsState()
+    val currentFilter by viewModel.currentFilter.collectAsState()
 
-    val isCompletedSectionExpanded by viewModel.isCompletedSectionExpanded.collectAsState()
-
-    // 💡 [추가] ViewModel에서 분리된 두 목록을 가져옵니다.
-    val incompleteTasks = viewModel.incompleteTasks
-    val completedTasks = viewModel.completedTasks
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var selectedTask by remember { mutableStateOf<Task?>(null) }
     var showAddTaskDialog by remember { mutableStateOf(false) }
-
+    val allCount = viewModel.allCount
+    val activeCount = viewModel.activeCount
+    val completedCount = viewModel.completedCount
 
     Scaffold(
         containerColor = LightGrayBackground,
@@ -97,81 +110,92 @@ fun TasksScreen(viewModel: TasksViewModel = viewModel()) {
                 .padding(top = 16.dp)
         ) {
             Text(
-                text = "My Tasks", style = MaterialTheme.typography.headlineLarge)
+                text = "My Tasks", style = MaterialTheme.typography.headlineLarge
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 💡 [삽입 위치 2]: 로딩 피드백 박스 코드
+            FilterTabRow( // 탭 UI
+                currentFilter = currentFilter,
+                onFilterSelected = viewModel::setFilter,
+                allCount = allCount, // ✨ [추가]
+                activeCount = activeCount, // ✨ [추가]
+                completedCount = completedCount // ✨ [추가]
+            )
+
+            // ✨ [추가] 완료 탭일 때만 "모두 삭제" 버튼 표시 로직
+            if (currentFilter == TaskFilter.COMPLETED && tasks.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = { viewModel.deleteAllCompletedTasks() }, // 💡 [함수 호출]
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                    ) {
+                        Text("모든 완료 항목 삭제")
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp)) // 버튼과 목록 사이 간격
+            } else {
+                Spacer(modifier = Modifier.height(16.dp)) // 삭제 버튼이 없을 때의 간격 유지
+            }
+
+            // 💡 [삽입 위치]: 로딩 피드백 박스 코드
             if (isAddingTask && taskTitleLoading.isNotBlank()) {
                 LoadingFeedbackBox(taskTitle = taskTitleLoading)
+                Spacer(modifier = Modifier.height(16.dp)) // 로딩 박스와 목록 사이 간격
             }
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // 💡 [수정] Task 목록 상태 확인 로직 (incompleteTasks 사용)
+
+            // 3. [UPDATE] Task 목록 표시 영역
             Box(modifier = Modifier.weight(1f)) {
 
-                // 1. Task 목록 (TaskList 호출)
-                TaskList(
-                    incompleteTasks = incompleteTasks, // 미완료 목록 전달
-                    completedTasks = completedTasks,   // 완료 목록 전달
-                    isCompletedSectionExpanded = isCompletedSectionExpanded, // 확장 상태 전달
-                    onToggleExpand = viewModel::toggleCompletedSectionExpansion, // 토글 함수 전달
-                    onToggleComplete = viewModel::toggleTaskCompletion,
-                    onDeleteTask = viewModel::deleteTask,
-                    onTaskClick = { task -> selectedTask = task }
-                )
-
-                // 💡 [추가] EmptyStateMessage 조건 (미완료 Task도 없고, 완료 Task도 없을 때)
-                if (incompleteTasks.isEmpty() && completedTasks.isEmpty() && !isAddingTask) {
+                // 💡 [UPDATE] Task 목록 상태 확인 로직 (단일 'tasks' 목록으로 확인)
+                if (tasks.isEmpty() && !isAddingTask) {
                     EmptyStateMessage()
+                } else {
+                    // 💡 [UPDATE] TaskList 호출 (단일 목록 전달)
+                    TaskList(
+                        tasks = tasks, // 💡 필터링된 단일 목록 전달
+                        onToggleComplete = viewModel::toggleTaskCompletion,
+                        onDeleteTask = viewModel::deleteTask,
+                        onTaskClick = { task -> selectedTask = task }
+                    )
                 }
             }
         }
     }
 
-            selectedTask?.let { task ->
-                TaskDetailDialog(
-                    task = task,
-                    viewModel= viewModel,
-                    onDismiss = { selectedTask = null }
-                )
+    selectedTask?.let { task ->
+        TaskDetailDialog(
+            task = task,
+            viewModel = viewModel,
+            onDismiss = { selectedTask = null },
+            onDeleteTask = {
+                viewModel.deleteTask(task) // ViewModel의 삭제 함수 호출
+                selectedTask = null        // Dialog 닫기
+            },
+            onToggleCompleted = { isChecked ->
+                // ViewModel의 toggleCompletion 함수는 Task 객체를 요구하므로,
+                // 현재 Task 객체의 isCompleted 상태를 변경한 복사본을 만들어 전달합니다.
+                viewModel.toggleTaskCompletion(task.copy(isCompleted = isChecked))
             }
+        )
+    }
     if (showAddTaskDialog) {
         AddTaskDialog(
             onDismiss = { showAddTaskDialog = false },
-            onAddTask = { title, date, details, time -> // 💡 [수정] 세 번째 인자 'details' 추가
-                // ViewModel의 addTask 함수를 세 개의 인자와 함께 호출
-                viewModel.addTask(title, date, details, time)
+            onAddTask = { title, details, startTime, endTime, startDate, endDate ->
+                viewModel.addTask(title, details, startTime, endTime, startDate, endDate)
                 showAddTaskDialog = false
             },
-            initialDate = selectedDate
+            initialDate = LocalDate.now()
         )
     }
 }
 
-// 날짜/시간 포맷터 정의 및 포맷팅 로직 (파일 최상단 레벨에 배치)
-private val DateFormatter = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH) // 예: Nov 21
-private val TimeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH) // 예: 4:00 AM
 
-// 현재 날짜를 가져오는 함수 (Today, Nov 21 등을 결정하기 위해)
-private fun formatTaskDate(date: LocalDate, time: LocalTime?): String {
-    val today = LocalDate.now()
-    val isToday = date == today
-
-    // 1. 날짜 부분 포맷팅 (오늘이면 Today, 아니면 월 일)
-    val datePart = if (isToday) {
-        "Today"
-    } else {
-        date.format(DateFormatter)
-    }
-
-    // 2. 시간 부분 포맷팅
-    val timePart = time?.let {
-        ", ${it.format(TimeFormatter)}"
-    } ?: ""
-
-    // 3. 최종 결합
-    return datePart + timePart
-}
 // --------------------------------------------------------
 // @Composable fun TaskItem(...) { ... } // TaskItem 함수가 이어서 위치해야 합니다.
     // Task 목록의 각 항목(한 줄)을 표시하는 컴포넌트
@@ -208,7 +232,6 @@ fun TaskItem(
                 modifier = Modifier.size(24.dp) // 아이콘 크기 설정
             )
         }
-        // 🟢 [추가] 원형 체크박스 스타일 Icon 구현 끝
 
         Spacer(Modifier.width(8.dp))
 
@@ -226,17 +249,26 @@ fun TaskItem(
                     color = if (task.isCompleted) Color.Gray else Color.Black
                 )
             )
-
+            val dateRangeText = formatTaskDateRange(task.startDate, task.endDate)
             // 2. ✨ [추가] 날짜/시간 정보 표시
-            if (task.dueDate != null) {
-                // 날짜/시간 포맷팅 로직 사용 (formatTaskDate 함수 사용 가정)
-                val dateText = formatTaskDate(task.dueDate, task.dueTime)
+            if (dateRangeText != null) { // 날짜 범위가 있을 경우에만 표시
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = dateText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.DarkGray
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // 💡 [추가] 달력 아이콘 (Event Icon)
+                    Icon(
+                        Icons.Filled.Event,
+                        contentDescription = "기한 범위",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.DarkGray
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Text(
+                        text = dateRangeText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.DarkGray
+                    )
+                }
             }
         } // Column 종료
 
@@ -252,43 +284,26 @@ fun TaskItem(
 
 @Composable
 fun TaskList(
+    tasks: List<Task>,
     onToggleComplete: (Task) -> Unit,
     onDeleteTask: (Task) -> Unit,
     onTaskClick: (Task) -> Unit,
-
-    // 💡 [추가된 매개변수들]
-    incompleteTasks: List<Task>, // 미완료 Task 목록
-    completedTasks: List<Task>,   // 완료 Task 목록
-    isCompletedSectionExpanded: Boolean, // 확장/축소 상태
-    onToggleExpand: () -> Unit // 확장/축소 함수
 ) {
+    // 1. Task 목록 (LazyColumn)
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        // 1. 미완료 Task 목록
-        items(incompleteTasks, key = { it.id }) { task ->
-            TaskItem(task = task, onToggleComplete = onToggleComplete, onDeleteTask = onDeleteTask, onTaskClick = onTaskClick)
+        items(tasks, key = { it.id }) { task ->
+            TaskItem(
+                task = task,
+                onToggleComplete = onToggleComplete,
+                onDeleteTask = onDeleteTask,
+                onTaskClick = onTaskClick
+            )
             HorizontalDivider()
-        }
-
-        // 2. 완료 Task 섹션 헤더 (완료된 Task가 있을 경우에만 표시)
-        if (completedTasks.isNotEmpty()) {
-            item {
-                CompletedHeader(
-                    count = completedTasks.size,
-                    isExpanded = isCompletedSectionExpanded,
-                    onClick = onToggleExpand // 토글 액션 연결
-                )
-            }
-
-            // 3. 완료 Task 목록 (접기/펴기)
-            if (isCompletedSectionExpanded) {
-                items(completedTasks, key = { it.id }) { task ->
-                    TaskItem(task = task, onToggleComplete = onToggleComplete, onDeleteTask = onDeleteTask, onTaskClick = onTaskClick)
-                    HorizontalDivider()
                 }
             }
         }
-    }
-}
+
+
 
     @Composable
     fun EmptyStateMessage() {
@@ -368,69 +383,83 @@ fun TaskList(
 @Composable
 fun AddTaskDialog(
     onDismiss: () -> Unit,
-    onAddTask: (title: String, date: LocalDate, details: String, time: LocalTime?) -> Unit, // 💡 date 매개변수 추가
+    onAddTask: (
+        title: String,
+        details: String,
+        startTime: LocalTime?,
+        endTime: LocalTime?,
+        startDate: LocalDate?,
+        endDate: LocalDate?
+            ) -> Unit, // 💡 date 매개변수 추가
     initialDate: LocalDate
 ) {
     // 1. Task 제목 입력 상태
     var taskTitle by remember { mutableStateOf("") }
     var taskDetails by remember { mutableStateOf("") }
+
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf(initialDate) }
+    var pickingEndDate by remember { mutableStateOf(false) }
+    var startDate by remember { mutableStateOf(initialDate) } // 시작일은 현재 날짜로 초기화
+    var endDate by remember { mutableStateOf<LocalDate?>(null) }
+
     var showTimePicker by remember { mutableStateOf(false) }
-    var selectedTime by remember { mutableStateOf<LocalTime?>(null) } // LocalTime은 nullable
+    var pickingEndTime by remember { mutableStateOf(false) } // 마감 시간 선택 중 여부
+    var startTime by remember { mutableStateOf<LocalTime?>(null) } // 시작 시간
+    var endTime by remember { mutableStateOf<LocalTime?>(null) }   // 마감 시간
 
     val isAddButtonEnabled = taskTitle.isNotBlank()
 
     if (showDatePicker) {
+        val initialDateForPicker = if (pickingEndDate) endDate ?: startDate else startDate
+
         val dateState = rememberDatePickerState(
-            // LocalDate를 millis로 변환하여 초기 상태 설정
-            initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            initialSelectedDateMillis = initialDateForPicker
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant().toEpochMilli()
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        dateState.selectedDateMillis?.let { millis ->
-                            // 선택된 millis를 LocalDate로 변환하여 selectedDate 업데이트
-                            selectedDate = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+                TextButton(onClick = {
+                    dateState.selectedDateMillis?.let { millis ->
+                        val newDate = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        if (pickingEndDate) {
+                            endDate = newDate
+                        } else {
+                            startDate = newDate
+                            if (endDate == null || newDate.isAfter(endDate)) {
+                                endDate = newDate
+                            }
                         }
-                        showDatePicker = false
                     }
-                ) {
+                    showDatePicker = false
+                }) {
                     Text("확인")
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("취소")
-                }
-            }
-        ) {
-            DatePicker(state = dateState)
-        }
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("취소") } }
+        ) { DatePicker(state = dateState) }
     }
+    if (showTimePicker) {
+        TaskTimePickerDialog(
+            initialTime = if (pickingEndTime) endTime else startTime, // ✨ [수정] pickingEndTime에 따라 다른 시간 전달
+            onTimeSelected = { newTime ->
+                if (pickingEndTime) endTime = newTime else startTime = newTime // ✨ [수정] 시간 상태 업데이트
+            },
+            onDismiss = { showTimePicker = false })
+    }
+
+
     // 4. Dialog (Google Tasks 스타일 모달 역할을 대신합니다)
     Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp)
-            ) {
+        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+            Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "새 할 일 추가",
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
-                if (showTimePicker) {
-                    TaskTimePickerDialog(
-                        initialTime = selectedTime,
-                        onTimeSelected = { newTime -> selectedTime = newTime },
-                        onDismiss = { showTimePicker = false }
-                    )
-                }
                 // 입력 필드 (Text Input)
                 OutlinedTextField(
                     value = taskTitle,
@@ -452,36 +481,89 @@ fun AddTaskDialog(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // ✨ [수정] 3. 날짜 표시 및 버튼
-                Row(
-                    modifier = Modifier.fillMaxWidth(), // 상단에 충분한 간격 확보
-                    horizontalArrangement = Arrangement.Start, // 💡 [핵심] 왼쪽에 정렬,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(8.dp) // 날짜 Row와 시간 Row 사이 간격
                 ) {
-                    // ✨ 4. 날짜 변경 버튼
-                    TextButton(onClick = { showDatePicker = true }) { // 클릭 시 DatePicker 열기
-                        Icon(Icons.Filled.EditCalendar, contentDescription = "날짜 변경",tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(selectedDate.format(DateTimeFormatter.ofPattern("M월 d일", Locale.KOREA)))
+                    // ✨ [수정] 3. 날짜 표시 및 버튼
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // 1A. 시작일 설정 버튼
+                        TextButton(onClick = { pickingEndDate = false; showDatePicker = true },modifier = Modifier.weight(1f)) {
+                            Icon(
+                                Icons.Filled.Event,
+                                contentDescription = "시작일 변경",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                startDate.format(
+                                    DateTimeFormatter.ofPattern(
+                                        "M월 d일",
+                                        Locale.KOREA
+                                    )
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("~") // 범위 표시자
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // 1B. 마감일 설정 버튼
+                        TextButton(onClick = { pickingEndDate = true; showDatePicker = true },modifier = Modifier.weight(1f)) {
+                            Icon(
+                                Icons.Filled.Event,
+                                contentDescription = "마감일 변경",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                endDate?.format(DateTimeFormatter.ofPattern("M월 d일", Locale.KOREA))
+                                    ?: "마감일"
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // 2A. 시작 시간 설정 버튼
+                        TextButton(onClick = { pickingEndTime = false; showTimePicker = true },modifier = Modifier.weight(1f)) {
+                            val timeText = startTime?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "시작 시간"
+                            Icon(
+                                Icons.Filled.Schedule,
+                                contentDescription = "시작 시간 설정",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(timeText)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("~")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        // 2B. 마감 시간 설정 버튼
+                        TextButton(onClick = { pickingEndTime = true; showTimePicker = true },modifier = Modifier.weight(1f)) {
+                            val timeText =
+                                endTime?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "마감 시간"
+                            Icon(
+                                Icons.Filled.Schedule,
+                                contentDescription = "마감 시간 설정",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(timeText)
+                        }
+
+                        // 💡 시간 지우기 버튼 (시작 시간과 마감 시간 중 하나라도 설정되어 있을 때 표시)
+                        if (startTime != null || endTime != null) {
+                            IconButton(onClick = { startTime = null; endTime = null }) {
+                                Icon(
+                                    Icons.Filled.Close,
+                                    contentDescription = "시간 지우기",
+                                    tint = Color.Gray
+                                )
+                            }
+                        }
+                    } // Row 종료
                 }
-                TextButton(onClick = { showTimePicker = true }) {
-                    val timeText = selectedTime?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "시간 설정"
-
-                    // 💡 [수정] Icon 호출을 하나만 남깁니다.
-                    Icon(
-                        imageVector = Icons.Filled.Schedule,
-                        contentDescription = "시간 설정",
-                        tint = MaterialTheme.colorScheme.primary // 테마 주 색상으로 표시
-                    )
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    // 💡 [수정] Text는 시간 설정 텍스트를 표시
-                    Text(timeText)
-                }
-            }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -490,7 +572,17 @@ fun AddTaskDialog(
                     TextButton(onClick = onDismiss) { Text("취소") }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
-                        onClick = { onAddTask(taskTitle, selectedDate, taskDetails, selectedTime ) }, // ✨ [수정] details 전달
+                        onClick = {
+                            // 🟢 [최종 수정] 6개 인자(title, details, time, startDate, endDate)를 정확히 전달
+                            onAddTask(
+                                taskTitle,
+                                taskDetails,
+                                startTime,
+                                endTime,
+                                startDate,
+                                endDate
+                            )
+                        },
                         enabled = isAddButtonEnabled
                     ) {
                         Text("추가")
@@ -499,37 +591,53 @@ fun AddTaskDialog(
             }
         }
     }
+}
 // TasksScreen.kt (TaskDetailDialog 함수를 아래 코드로 전체 교체)
 
 @Composable
 fun TaskDetailDialog(
     task: Task,
-    viewModel: TasksViewModel, // ✨ [추가] ViewModel을 인자로 받습니다.
-    onDismiss: () -> Unit
+    viewModel: TasksViewModel,
+    onDismiss: () -> Unit,
+    onDeleteTask: () -> Unit,
+    onToggleCompleted: (Boolean) -> Unit
 ) {
-    // ✨ [수정] 수정 가능한 상태를 정의합니다.
+    // 1. 상태 정의 (수정 가능한 상태)
+    var currentTitle by remember { mutableStateOf(task.title) } // 🟢 [추가] 제목 편집 상태
     var currentDetails by remember { mutableStateOf(task.details) }
-    var currentDate by remember { mutableStateOf(task.dueDate ?: LocalDate.now()) }
-    var isDatePickerShowing by remember { mutableStateOf(false) }
-    var isDetailsExpanded by remember { mutableStateOf(false) }
-    val formatter = remember { DateTimeFormatter.ofPattern("yyyy년 M월 d일") }
-    var currentDueTime by remember { mutableStateOf(task.dueTime) }
-    var isTimePickerShowing by remember { mutableStateOf(false) } // Time Picker 표시 상태
 
+    // 2. 날짜/시간 상태 (Task 모델의 값을 초기값으로 사용)
+    var currentStartDate by remember { mutableStateOf(task.startDate) }
+    var currentEndDate by remember { mutableStateOf(task.endDate) }
+    var currentStartTime by remember { mutableStateOf(task.startTime) }
+    var currentEndTime by remember { mutableStateOf(task.endTime) }
+
+    var isDatePickerShowing by remember { mutableStateOf(false) }
+    var isTimePickerShowing by remember { mutableStateOf(false) }
+    var pickingEndTime by remember { mutableStateOf(false) }
+    var isDetailsExpanded by remember { mutableStateOf(task.details.isNotBlank()) }
+
+    val formatter = remember { DateTimeFormatter.ofPattern("yyyy. M . d") }
+
+
+    // DatePicker/TimePicker Calls (Outside Dialog body)
     if (isDatePickerShowing) {
         TaskDatePickerDialog(
-            initialDate = currentDate,
-            onDateSelected = { newDate -> currentDate = newDate },
+            initialDate = currentStartDate ?: LocalDate.now(),
+            onDateSelected = { newDate -> currentStartDate = newDate },
             onDismiss = { isDatePickerShowing = false }
         )
     }
     if (isTimePickerShowing) {
         TaskTimePickerDialog(
-            initialTime = currentDueTime,
-            onTimeSelected = { newTime -> currentDueTime = newTime },
+            initialTime = if (pickingEndTime) currentEndTime else currentStartTime,
+            onTimeSelected = { newTime ->
+                if (pickingEndTime) currentEndTime = newTime else currentStartTime = newTime
+            },
             onDismiss = { isTimePickerShowing = false }
         )
     }
+
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -539,30 +647,42 @@ fun TaskDetailDialog(
             Column(
                 modifier = Modifier.padding(24.dp)
             ) {
-                // 1. Task 제목 (수정 불가, 크고 굵게 표시)
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                // 1. Task 제목 및 삭제 버튼 헤더 (유지)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = currentTitle,
+                        onValueChange = { currentTitle = it },
+                        label = { Text("할 일 제목") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            disabledContainerColor = MaterialTheme.colorScheme.surface,
+                        )
+                    )
+                    IconButton(onClick = onDeleteTask) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = "할 일 삭제",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
-                // 2. 완료 상태 (기존과 동일)
+                // 2. 완료 상태 (Interactive Checkbox)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .offset(x = (-8).dp)
                         .padding(bottom = 12.dp)
                 ) {
-                    val checkboxIcon = if (task.isCompleted) Icons.Filled.CheckCircle else Icons.Outlined.RadioButtonUnchecked
-                    val checkboxColor = if (task.isCompleted) MaterialTheme.colorScheme.primary else Color.Gray
-
-                    Icon( // 💡 [수정] Checkbox 대신 Icon 사용 (수정 불가 상태 표시용)
-                        imageVector = checkboxIcon,
-                        contentDescription = "Task 완료 상태",
-                        tint = checkboxColor,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Checkbox(checked = task.isCompleted, onCheckedChange = onToggleCompleted)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = if (task.isCompleted) "완료됨" else "미완료",
@@ -571,126 +691,133 @@ fun TaskDetailDialog(
                     )
                 }
 
-                // 3. 기한 (날짜 변경 버튼)
-                Row(
+                // -----------------------------------------------------
+                // 3. ✨ [최종 FIX] 기한 (날짜 및 시간 편집 그룹) - 간소화된 버튼 UI
+                // -----------------------------------------------------
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start, // 💡 왼쪽에 정렬
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable { isDatePickerShowing = true } // 날짜 선택기 열기
-                        .padding(horizontal = 4.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    Icon(Icons.Filled.CalendarMonth, contentDescription = "기한 아이콘")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = currentDate.format(formatter),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    val timeText = currentDueTime?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "시간 설정"
+                    // 3A. 📅 날짜 범위 Row (시작일 ~ 마감일)
                     Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .clickable { isTimePickerShowing = true } // 시간 선택기 열기
-                            .padding(horizontal = 4.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                            Icon(Icons.Filled.Schedule, contentDescription = "시간 설정")
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(timeText)
+                        // 시작일 버튼
+                        TextButton(
+                            onClick = { isDatePickerShowing = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            // 🟢 [FIX] "시작일: " 레이블 제거
+                            Text(text = currentStartDate?.format(formatter) ?: "시작일 설정")
                         }
-                        if (currentDueTime != null) {
-                            IconButton(onClick = { currentDueTime = null }) {
-                                Icon(Icons.Filled.Close, contentDescription = "시간 지우기", tint = Color.Gray)
-                            }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("~") // 범위 표시자
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // 마감일 설정 버튼
+                        TextButton(
+                            onClick = { isDatePickerShowing = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+
+                            // 🟢 [FIX] "마감일: " 레이블 제거
+                            Text(text = currentEndDate?.format(formatter) ?: "마감일 설정")
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp)) // 날짜 섹션과 시간 섹션 사이 간격
+
+// 3B. ⏱️ 시간 설정 Row (이어서 배치)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // 시작 시간 설정 버튼
+                    TextButton(onClick = { pickingEndTime = false; isTimePickerShowing = true }) {
+                        val startTimeText = currentStartTime?.format(DateTimeFormatter.ofPattern("a h:mm")) ?: "시작 시간"
+                        Icon(Icons.Filled.Schedule, contentDescription = "시작 시간 설정", tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(startTimeText)
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("~")
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // 마감 시간 설정 버튼
+                    TextButton(onClick = { pickingEndTime = true; isTimePickerShowing = true }) {
+                        val endTimeText = currentEndTime?.format(DateTimeFormatter.ofPattern("a h:mm")) ?: "마감 시간"
+                        Icon(Icons.Filled.Schedule, contentDescription = "마감 시간 설정", tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(endTimeText)
+                    }
+
+                    // 시간 지우기 버튼
+                    if (currentStartTime != null || currentEndTime != null) {
+                        IconButton(onClick = { currentStartTime = null; currentEndTime = null }) {
+                            Icon(Icons.Filled.Close, contentDescription = "시간 지우기", tint = Color.Gray)
+                        }
+                    }
+                } // Row 종료 (시간 그룹)
+
+                Spacer(modifier = Modifier.height(16.dp)) // 날짜/시간 그룹과 상세 정보 섹션 사이 간격
+
                 if (isDetailsExpanded) {
                     // 4. 세부 정보 (편집 가능한 TextField)
                     OutlinedTextField(
                         value = currentDetails,
                         onValueChange = { currentDetails = it },
                         label = if (currentDetails.isEmpty()) { { Text("세부 정보") } } else null,
-                        placeholder = if (currentDetails.isEmpty()) {
-                            { Text("세부 정보를 입력하세요...", color = Color.Gray) }
-                        } else null,
-                        leadingIcon = {
-                            Icon(
-                                Icons.AutoMirrored.Filled.Notes,
-                                contentDescription = "세부 정보 아이콘"
-                            )
-                        },
-                        minLines = 3,
-                        maxLines = 5,
+                        placeholder = if (currentDetails.isEmpty()) { { Text("세부 정보를 입력하세요...", color = Color.Gray) } } else null,
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, contentDescription = "세부 정보 아이콘") },
+                        minLines = 3, maxLines = 5,
                         modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                            disabledContainerColor = MaterialTheme.colorScheme.surface,
-                        )
+                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface, disabledContainerColor = MaterialTheme.colorScheme.surface)
                     )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(onClick = {
-                            // 닫을 때 내용도 비워지도록 currentDetails = "" 로직을 추가할 수 있지만, 여기서는 닫기만 합니다.
-                            isDetailsExpanded = false
-                        }) {
-                            Text("숨기기")
-                        }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { isDetailsExpanded = false }) { Text("숨기기") }
                     }
                     Spacer(modifier = Modifier.height(24.dp))
-                } else {
+                }
+                else {
                     // 4b. 축소된 상태: 클릭 가능한 버튼 UI 표시
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { isDetailsExpanded = true } // ✨ [액션] 클릭 시 확장
+                            .fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable { isDetailsExpanded = true }
                             .padding(horizontal = 12.dp, vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Notes,
-                            contentDescription = "세부 정보 아이콘",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Icon(Icons.AutoMirrored.Filled.Notes, contentDescription = "세부 정보 아이콘", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = if (task.details.isNotBlank()) task.details.take(20) + if (task.details.length > 20) "..." else ""
-                            else "세부 정보 추가",
+                        Text(text = if (task.details.isNotBlank()) task.details.take(20) + if (task.details.length > 20) "..." else "" else "세부 정보 추가",
                             color = if (task.details.isNotBlank()) Color.DarkGray else MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
-                    // 💡 [if/else 블록 종료]
-// ✨ [수정] 세부 정보가 끝나면 Spacer를 추가합니다.
                     Spacer(modifier = Modifier.height(24.dp))
                 }
+
                 // 5. 저장 및 닫기 버튼
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    // 저장 버튼
                     TextButton(onClick = {
                         // ViewModel 함수를 호출하여 업데이트
-                        viewModel.updateTaskDetails(task.id, currentDetails, currentDate, currentDueTime)
-                        onDismiss() // Dialog 닫기
+                        viewModel.updateTaskDetails(
+                            task.id,
+                            currentDetails,
+                            currentStartDate,
+                            currentEndDate,
+                            currentStartTime,
+                            currentEndTime
+                        )
+                        onDismiss()
                     }) {
                         Text("저장")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    // 닫기 버튼
                     TextButton(onClick = onDismiss) {
                         Text("닫기")
                     }
@@ -698,17 +825,20 @@ fun TaskDetailDialog(
             }
         }
     }
+}
+
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun TaskDatePickerDialog(
-        initialDate: LocalDate,
+        initialDate: LocalDate?,
         onDateSelected: (LocalDate) -> Unit,
         onDismiss: () -> Unit
     ) {
+        val actualInitialDate = initialDate ?: LocalDate.now()
         // LocalDate를 Long (millis)로 변환하여 초기 상태 설정
         val initialTimeMillis =
-            initialDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            actualInitialDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
         val dateState = rememberDatePickerState(
             initialSelectedDateMillis = initialTimeMillis
@@ -741,78 +871,99 @@ fun TaskDetailDialog(
             DatePicker(state = dateState)
         }
     }
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TaskTimePickerDialog(
-    initialTime: LocalTime?,
-    onTimeSelected: (LocalTime) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val timeState = rememberTimePickerState(
-        initialHour = initialTime?.hour ?: LocalTime.now().hour,
-        initialMinute = initialTime?.minute ?: LocalTime.now().minute,
-        is24Hour = false // 12시간제로 표시 (true로 바꾸면 24시간제)
-    )
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val selectedTime = LocalTime.of(timeState.hour, timeState.minute)
-                    onTimeSelected(selectedTime)
-                    onDismiss()
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun TaskTimePickerDialog(
+        initialTime: LocalTime?,
+        onTimeSelected: (LocalTime) -> Unit,
+        onDismiss: () -> Unit
+    ) {
+        // 1. TimePickerState 정의
+        val now = LocalTime.now()
+        val initialHour = initialTime?.hour ?: now.hour
+        val initialMinute = initialTime?.minute ?: now.minute
+
+        val timeState = rememberTimePickerState(
+            initialHour = initialHour,
+            initialMinute = initialMinute,
+            is24Hour = false // 12시간제로 표시
+        )
+
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text("시간 설정")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedTime = LocalTime.of(timeState.hour, timeState.minute)
+                        onTimeSelected(selectedTime)
+                        onDismiss()
+                    }
+                ) {
+                    Text("확인")
                 }
-            ) {
-                Text("확인")
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("취소")
+                }
+            },
+            text = {
+                // 🟢 [TimeInput Composable] 숫자 입력 필드 스타일로 시간 선택 UI 제공
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    TimeInput(state = timeState)
+                }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("취소")
-            }
-        },
-        text = {
-            TimePicker(state = timeState)
-        }
-    )
-}
+        )
+    }
 
 
 // TasksScreen.kt (파일 하단에 추가)
 
+
 @Composable
-fun CompletedHeader(count: Int, isExpanded: Boolean, onClick: () -> Unit) {
-    // 💡 확장/축소 상태에 따라 아이콘을 회전시키기 위한 상태 (animateFloatAsState 사용)
-    val rotation by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f, // 펼쳐지면 180도 회전
-        label = "ExpansionRotation"
-    )
+fun FilterTabRow(
+    currentFilter: TaskFilter,
+    onFilterSelected: (TaskFilter) -> Unit,
+    allCount: Int,
+    activeCount: Int,
+    completedCount: Int
+) {
+    val tabs = TaskFilter.entries.toTypedArray()
+    val selectedIndex = tabs.indexOf(currentFilter)
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick) // 클릭 시 목록 확장/축소
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+    TabRow(
+        selectedTabIndex = selectedIndex,
+        modifier = Modifier.fillMaxWidth(),
+        divider = { HorizontalDivider(color = Color.Transparent) }
     ) {
-        // 아이콘 (회전 적용)
-        Icon(
-            Icons.Filled.KeyboardArrowDown,
-            contentDescription = "토글",
-            modifier = Modifier
-                .rotate(rotation) // 회전 적용
-                .size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // 텍스트 (Completed (N))
-        Text(
-            text = "Completed ($count)",
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.DarkGray
-        )
+        tabs.forEachIndexed { index, filter ->
+            val count = when (filter) {
+                TaskFilter.ALL -> allCount
+                TaskFilter.ACTIVE -> activeCount
+                TaskFilter.COMPLETED -> completedCount
+            }
+            Tab(
+                selected = selectedIndex == index,
+                onClick = { onFilterSelected(filter) },
+                // 탭 텍스트 설정 (ALL -> All, ACTIVE -> Active, COMPLETED -> Completed)
+                text = {
+                    val tabName = filter.name.lowercase()
+                        .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                    Text(text = "$tabName ($count)")
+                },
+                // 선택된 탭의 색상을 강조하고, 선택되지 않은 탭의 색상을 조정하여
+                // 목표 UI의 Segmented Button 느낌을 낼 수 있습니다.
+                selectedContentColor = MaterialTheme.colorScheme.primary,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
+    // 탭 아래에 구분선을 추가하여 상단 AppBar와 분리
+    HorizontalDivider(modifier = Modifier.fillMaxWidth())
 }
-
 

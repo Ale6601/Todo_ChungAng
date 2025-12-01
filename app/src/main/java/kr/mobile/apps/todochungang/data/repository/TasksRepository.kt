@@ -24,14 +24,22 @@ object TasksRepository {
     fun toggleTaskCompletion(task: Task) {
         val index = _tasks.indexOfFirst { it.id == task.id }
         if (index != -1) {
-            // Task 객체를 복사하고 isCompleted 상태만 반전시켜 목록을 갱신합니다.
-            _tasks[index] = task.copy(isCompleted = !task.isCompleted)
+            val updatedTask = task.copy(isCompleted = !task.isCompleted)
             // 정렬된 목록을 유지하기 위해 별도 정렬 로직이 필요하지만, 여기서는 상태 업데이트만 처리합니다.
+            _tasks.removeAt(index)
+            _tasks.add(index, updatedTask)
         }
     }
 
     // 💡 [추가] Task의 세부 정보와 날짜를 수정하는 로직
-    fun updateTask(taskId: String, newDetails: String, newDate: LocalDate, newTime: LocalTime?) {
+    fun updateTask(
+        taskId: String,
+        newDetails: String,
+        newStartDate: LocalDate?,
+        newEndDate: LocalDate?,
+        newStartTime: LocalTime?, // 🟢 [수정] dueTime 대신 newStartTime
+        newEndTime: LocalTime?
+    ) {
         // 1. 해당 Task의 인덱스 찾기
         val index = _tasks.indexOfFirst { it.id == taskId }
 
@@ -40,17 +48,25 @@ object TasksRepository {
             val existingTask = _tasks[index]
             val updatedTask = existingTask.copy(
                 details = newDetails, // 세부 정보 수정
-                dueDate = newDate, // 날짜 수정
-                dueTime = newTime
+                startDate = newStartDate, // 🟢 startDate 업데이트
+                endDate = newEndDate, // 날짜 수정
+                startTime = newStartTime, // 🟢 [수정] startTime 업데이트
+                endTime = newEndTime
             )
 
             // 3. 목록의 해당 위치 Task를 업데이트된 Task로 교체하여 UI에 반영
-            _tasks[index] = updatedTask
+            _tasks.removeAt(index)
+            _tasks.add(index, updatedTask)
         }
     }
 
     // Task를 목록에서 삭제하는 로직 (기존과 동일)
     fun deleteTask(task: Task) {
         _tasks.remove(task)
+    }
+    // 💡 [추가] 모든 완료 Task를 삭제하는 함수
+    fun deleteAllCompletedTasks() {
+        // isCompleted 상태가 true인 모든 Task를 리스트에서 제거합니다.
+        _tasks.removeAll { it.isCompleted }
     }
 }
