@@ -21,6 +21,7 @@ import kr.mobile.apps.todochungang.ui.calendar.CalendarNavigator
 import kr.mobile.apps.todochungang.ui.calendar.sampleEventsForMonth
 import kr.mobile.apps.todochungang.ui.common.BottomNavButtons
 import kr.mobile.apps.todochungang.ui.common.AccountMenu
+import kr.mobile.apps.todochungang.ui.profile.ProfileScreen
 import kr.mobile.apps.todochungang.ui.tasks.TasksScreen
 import kr.mobile.apps.todochungang.ui.theme.TodoChungAngTheme
 import kr.mobile.apps.todochungang.utils.UiState
@@ -107,6 +108,23 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
+
+
+                        composable("profile") {
+                            Scaffold(
+                                bottomBar = { BottomNavButtons(navController) }
+                            ) { innerPadding ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(innerPadding),
+                                    contentAlignment = Alignment.TopCenter
+                                ) {
+                                    ProfileScreen()
+                                }
+                            }
+                        }
+
                     }
                 }
             }

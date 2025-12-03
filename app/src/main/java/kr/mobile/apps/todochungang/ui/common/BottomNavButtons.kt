@@ -116,6 +116,7 @@ fun BottomNavButtons(navController: NavController) {
                     text = { Text("Profile") },
                     onClick = {
                         setSettingsExpanded(false)
+                        navController.navigate("profile")
                     }
                 )
                 DropdownMenuItem(
