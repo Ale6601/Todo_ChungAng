@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
@@ -38,6 +39,7 @@ fun Modifier.CalendarNavigator(
 ) {
     var ymString by rememberSaveable { mutableStateOf(initialMonth.toString()) }
     val month = remember(ymString) { YearMonth.parse(ymString) }
+    val today = remember { LocalDate.now() }
 
     Column(modifier = this.padding(16.dp)) {
         Row(
@@ -45,53 +47,69 @@ fun Modifier.CalendarNavigator(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Left: previous year / previous month
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { ymString = month.minusYears(1).toString() }) {
-                    Icon(Icons.Filled.KeyboardDoubleArrowLeft, contentDescription = "Previous year")
+                    Icon(
+                        Icons.Filled.KeyboardDoubleArrowLeft,
+                        contentDescription = "Previous year"
+                    )
                 }
                 IconButton(onClick = { ymString = month.minusMonths(1).toString() }) {
-                    Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month")
+                    Icon(
+                        Icons.Filled.ChevronLeft,
+                        contentDescription = "Previous month"
+                    )
                 }
             }
 
+            // Center: month name + year
             Text(
                 text = month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
-                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() } +
-                        " ${month.year}",
+                    .replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                    } + " ${month.year}",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
 
+            // Right: Today button + next month / next year
             Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(
+                    onClick = {
+                        ymString = YearMonth.from(today).toString()
+                    }
+                ) {
+                    Text("Today")
+                }
                 IconButton(onClick = { ymString = month.plusMonths(1).toString() }) {
-                    Icon(Icons.Filled.ChevronRight, contentDescription = "Next month")
+                    Icon(
+                        Icons.Filled.ChevronRight,
+                        contentDescription = "Next month"
+                    )
                 }
                 IconButton(onClick = { ymString = month.plusYears(1).toString() }) {
-                    Icon(Icons.Filled.KeyboardDoubleArrowRight, contentDescription = "Next year")
+                    Icon(
+                        Icons.Filled.KeyboardDoubleArrowRight,
+                        contentDescription = "Next year"
+                    )
                 }
             }
         }
 
         Spacer(Modifier.height(8.dp))
-
-        TextButton(onClick = { ymString = YearMonth.now().toString() }) {
-            Text("Today")
-        }
 
         Spacer(Modifier.height(8.dp))
 
         CalendarScreen(
             month = month,
             events = eventsForMonth(month),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            today = today
         )
     }
 }
 
-
-
-
 fun sampleEventsForMonth(month: YearMonth): List<CalendarEvent> {
-    //val day = LocalDate.of(month.year, month.month, minOf(11, month.lengthOfMonth()))
     return listOf()
 }

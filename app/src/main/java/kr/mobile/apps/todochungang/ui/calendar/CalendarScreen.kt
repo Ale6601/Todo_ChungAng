@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalFoundationApi::class)
+
 package kr.mobile.apps.todochungang.ui.calendar
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -40,11 +41,10 @@ data class CalendarEvent(
 fun CalendarScreen(
     month: YearMonth,
     events: List<CalendarEvent>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    today: LocalDate = LocalDate.now()
 ) {
     Column(modifier = modifier.padding(16.dp)) {
-        MonthHeader(month)
-        Spacer(Modifier.height(8.dp))
         WeekdayRow()
         Spacer(Modifier.height(4.dp))
 
@@ -61,6 +61,7 @@ fun CalendarScreen(
                     day = day,
                     inMonth = day.month == month.month,
                     eventsToday = eventsForDay(day, events),
+                    isToday = day == today && day.month == month.month && day.year == today.year
                 )
             }
         }
@@ -68,30 +69,22 @@ fun CalendarScreen(
 }
 
 @Composable
-private fun MonthHeader(month: YearMonth) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
-                .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() } +
-                    " ${month.year}",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-        // prev/next buttons can go here later
-    }
-}
-
-@Composable
 private fun WeekdayRow() {
+    val weekOrder = listOf(
+        DayOfWeek.MONDAY,
+        DayOfWeek.TUESDAY,
+        DayOfWeek.WEDNESDAY,
+        DayOfWeek.THURSDAY,
+        DayOfWeek.FRIDAY,
+        DayOfWeek.SATURDAY,
+        DayOfWeek.SUNDAY
+    )
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        DayOfWeek.entries.forEach { dow ->
+        weekOrder.forEach { dow ->
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -108,6 +101,7 @@ private fun WeekdayRow() {
     }
 }
 
+
 private data class SpanSlice(val title: String, val position: SlicePos, val color: Color)
 private enum class SlicePos { START, MIDDLE, END, SINGLE }
 
@@ -116,8 +110,10 @@ private fun DayCell(
     day: LocalDate,
     inMonth: Boolean,
     eventsToday: List<SpanSlice>,
+    isToday: Boolean
 ) {
-    val borderColor = Color(0xFFE9E9EF)
+    val borderColor = if (isToday) MaterialTheme.colorScheme.primary else Color(0xFFE9E9EF)
+
     Column(
         modifier = Modifier
             .aspectRatio(1f)
@@ -128,9 +124,15 @@ private fun DayCell(
         Text(
             text = day.dayOfMonth.toString(),
             style = MaterialTheme.typography.labelMedium,
-            color = if (inMonth) Color.Unspecified else Color(0xFF9AA0A6)
+            color = when {
+                !inMonth -> Color(0xFF9AA0A6)
+                isToday -> MaterialTheme.colorScheme.primary
+                else -> Color.Unspecified
+            },
+            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
         )
         Spacer(Modifier.height(4.dp))
+
         val maxBars = 3
         eventsToday.take(maxBars).forEach { slice ->
             EventBar(slice)
@@ -138,7 +140,11 @@ private fun DayCell(
         }
         val remaining = eventsToday.size - maxBars
         if (remaining > 0) {
-            Text("+$remaining more", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+            Text(
+                text = "+$remaining more",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray
+            )
         }
     }
 }
@@ -175,10 +181,14 @@ private fun EventBar(slice: SpanSlice) {
 
 private fun daysForMonthGrid(month: YearMonth): List<LocalDate> {
     val firstOfMonth = month.atDay(1)
-    // start week on Sunday; change to Monday by shifting logic here
-    val firstCell = firstOfMonth.minusDays(((firstOfMonth.dayOfWeek.value % 7)).toLong())
-    return (0 until 42).map { firstCell.plusDays(it.toLong()) } // 6 weeks
+    val dayOfWeek = firstOfMonth.dayOfWeek.value
+    val daysBack = dayOfWeek - DayOfWeek.MONDAY.value
+    val firstCell = firstOfMonth.minusDays(daysBack.toLong())
+
+    return (0 until 42).map { firstCell.plusDays(it.toLong()) } // 6 rows
 }
+
+
 
 private fun eventsForDay(day: LocalDate, events: List<CalendarEvent>): List<SpanSlice> {
     val candidates = events.filter { !day.isBefore(it.start) && !day.isAfter(it.end) }
@@ -199,12 +209,34 @@ private fun eventsForDay(day: LocalDate, events: List<CalendarEvent>): List<Span
 private fun CalendarScreenPreview() {
     val month = YearMonth.of(2025, 11)
     val sample = listOf(
-        CalendarEvent("1", "Morning workout",
-            LocalDate.of(2025, 11, 11), LocalDate.of(2025, 11, 11), Color(0xFFE74C3C)),
-        CalendarEvent("2", "Team meeting",
-            LocalDate.of(2025, 11, 11), LocalDate.of(2025, 11, 14), Color(0xFFE74C3C)),
-        CalendarEvent("3", "Review project documentation",
-            LocalDate.of(2025, 11, 11), LocalDate.of(2025, 11, 11), Color(0xFF5DADE2)),
+        CalendarEvent(
+            "1",
+            "Morning workout",
+            LocalDate.of(2025, 11, 11),
+            LocalDate.of(2025, 11, 11),
+            Color(0xFFE74C3C)
+        ),
+        CalendarEvent(
+            "2",
+            "Team meeting",
+            LocalDate.of(2025, 11, 11),
+            LocalDate.of(2025, 11, 14),
+            Color(0xFFE74C3C)
+        ),
+        CalendarEvent(
+            "3",
+            "Review project documentation",
+            LocalDate.of(2025, 11, 11),
+            LocalDate.of(2025, 11, 11),
+            Color(0xFF5DADE2)
+        ),
     )
-    MaterialTheme { Surface { CalendarScreen(month, sample, Modifier.fillMaxSize()) } }
+    MaterialTheme {
+        Surface {
+            CalendarScreen(
+                month = month,
+                events = sample
+            )
+        }
+    }
 }
