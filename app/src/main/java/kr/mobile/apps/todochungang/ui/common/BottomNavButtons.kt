@@ -1,4 +1,4 @@
-package kr.mobile.apps.todochungang.ui.components
+package kr.mobile.apps.todochungang.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
