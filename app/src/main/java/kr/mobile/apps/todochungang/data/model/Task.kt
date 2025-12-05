@@ -1,12 +1,11 @@
-package kr.mobile.apps.todochungang.data
+package kr.mobile.apps.todochungang.data.model
 
-import java.time.LocalDate // 💡 [필수] LocalDate import 추가
+import java.time.LocalDate
 import java.time.LocalTime
-
-// Task 항목의 데이터 구조를 정의하는 data class입니다.
+import java.util.UUID
 
 data class Task(
-    val id: String = java.util.UUID.randomUUID().toString(),
+    val id: String = UUID.randomUUID().toString(),
     val title: String,
     val details: String = "",
     val isCompleted: Boolean = false,

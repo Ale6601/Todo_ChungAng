@@ -33,7 +33,8 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-fun Modifier.CalendarNavigator(
+fun CalendarNavigator(
+    modifier: Modifier = Modifier,
     initialMonth: YearMonth = YearMonth.now(),
     eventsForMonth: (YearMonth) -> List<CalendarEvent> = { emptyList() }
 ) {
@@ -41,7 +42,7 @@ fun Modifier.CalendarNavigator(
     val month = remember(ymString) { YearMonth.parse(ymString) }
     val today = remember { LocalDate.now() }
 
-    Column(modifier = this.padding(16.dp)) {
+    Column(modifier = modifier.padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -76,9 +77,7 @@ fun Modifier.CalendarNavigator(
             // Right: Today button + next month / next year
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(
-                    onClick = {
-                        ymString = YearMonth.from(today).toString()
-                    }
+                    onClick = { ymString = YearMonth.from(today).toString() }
                 ) {
                     Text("Today")
                 }
@@ -99,8 +98,6 @@ fun Modifier.CalendarNavigator(
 
         Spacer(Modifier.height(8.dp))
 
-        Spacer(Modifier.height(8.dp))
-
         CalendarScreen(
             month = month,
             events = eventsForMonth(month),
@@ -111,5 +108,5 @@ fun Modifier.CalendarNavigator(
 }
 
 fun sampleEventsForMonth(month: YearMonth): List<CalendarEvent> {
-    return listOf()
+    return emptyList()
 }

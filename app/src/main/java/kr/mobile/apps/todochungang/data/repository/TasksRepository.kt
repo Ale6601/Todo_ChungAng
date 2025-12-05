@@ -1,7 +1,7 @@
 package kr.mobile.apps.todochungang.data.repository
 
 import androidx.compose.runtime.mutableStateListOf
-import kr.mobile.apps.todochungang.data.Task
+import kr.mobile.apps.todochungang.data.model.Task
 import kotlinx.coroutines.delay
 import java.time.LocalDate // 💡 [추가] LocalDate 사용을 위한 import
 import java.time.LocalTime

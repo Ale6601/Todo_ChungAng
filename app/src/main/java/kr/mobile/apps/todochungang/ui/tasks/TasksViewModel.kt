@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kr.mobile.apps.todochungang.data.Task
+import kr.mobile.apps.todochungang.data.model.Task
 import kr.mobile.apps.todochungang.data.repository.TasksRepository
 import java.time.LocalDate
 import java.time.LocalTime
