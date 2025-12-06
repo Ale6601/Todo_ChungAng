@@ -8,12 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,11 +21,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import java.time.Instant
@@ -73,14 +74,16 @@ fun AddTaskDialog(
 
     val isAddButtonEnabled = taskTitle.isNotBlank()
 
-    // ---------- 날짜 선택 다이얼로그 ----------
+    // ---------- Date picker ----------
     if (showDatePicker) {
         val initialDateForPicker = if (pickingEndDate) endDate ?: startDate else startDate
         val dateState = rememberDatePickerState(
             initialSelectedDateMillis = initialDateForPicker
                 .atStartOfDay(ZoneId.systemDefault())
-                .toInstant().toEpochMilli()
+                .toInstant()
+                .toEpochMilli()
         )
+
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -93,6 +96,7 @@ fun AddTaskDialog(
                             endDate = newDate
                         } else {
                             startDate = newDate
+                            // 시작일 바꿀 때, 아직 End가 없거나 더 이전이면 같이 맞춰줌
                             if (endDate == null || newDate.isAfter(endDate)) {
                                 endDate = newDate
                             }
@@ -100,16 +104,26 @@ fun AddTaskDialog(
                     }
                     showDatePicker = false
                 }) {
-                    Text("확인")
+                    Text(
+                        text = "Set",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("취소") }
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(
+                        text = "Cancel",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
-        ) { DatePicker(state = dateState) }
+        ) {
+            DatePicker(state = dateState)
+        }
     }
 
-    // ---------- 시간 선택 다이얼로그 ----------
+    // ---------- Time picker ----------
     if (showTimePicker) {
         TaskTimePickerDialog(
             initialTime = if (pickingEndTime) endTime else startTime,
@@ -120,25 +134,49 @@ fun AddTaskDialog(
         )
     }
 
-    // ---------- 메인 AddTask Dialog ----------
+    // ---------- Main dialog ----------
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Column(modifier = Modifier.padding(24.dp)) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
                 Text(
-                    text = "새 할 일 추가",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    text = "Add New Task",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 OutlinedTextField(
                     value = taskTitle,
                     onValueChange = { taskTitle = it },
-                    label = { Text("할 일 제목") },
+                    label = {
+                        Text(
+                            "Enter Task Title",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        disabledContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedBorderColor = MaterialTheme.colorScheme.outline,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -146,10 +184,22 @@ fun AddTaskDialog(
                 OutlinedTextField(
                     value = taskDetails,
                     onValueChange = { taskDetails = it },
-                    label = { Text("세부 정보 (선택 사항)") },
+                    label = {
+                        Text(
+                            "Enter Task Description",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
                     minLines = 3,
                     maxLines = 5,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        disabledContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedBorderColor = MaterialTheme.colorScheme.outline,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -157,92 +207,121 @@ fun AddTaskDialog(
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // 날짜
+                    val dateFormatter = remember {
+                        DateTimeFormatter.ofPattern("M.d", Locale.KOREA)
+                    }
+
+                    // Date
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TextButton(
-                            onClick = { pickingEndDate = false; showDatePicker = true },
+                            onClick = {
+                                pickingEndDate = false
+                                showDatePicker = true
+                            },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(
-                                Icons.Filled.Event,
-                                contentDescription = "시작일 변경",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                startDate.format(
-                                    DateTimeFormatter.ofPattern("M월 d일", Locale.KOREA)
-                                )
+                                startDate.format(dateFormatter),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("~")
+                        Text(
+                            "~",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
 
                         TextButton(
-                            onClick = { pickingEndDate = true; showDatePicker = true },
+                            onClick = {
+                                pickingEndDate = true
+                                showDatePicker = true
+                            },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(
-                                Icons.Filled.Event,
-                                contentDescription = "마감일 변경",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            // ★ endDate가 없으면 startDate를 그대로 보여줌
+                            val endForDisplay = endDate ?: startDate
                             Text(
-                                endDate?.format(
-                                    DateTimeFormatter.ofPattern("M월 d일", Locale.KOREA)
-                                ) ?: "마감일"
+                                endForDisplay.format(dateFormatter),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
 
-                    // 시간
+                    // Time
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TextButton(
-                            onClick = { pickingEndTime = false; showTimePicker = true },
+                            onClick = {
+                                pickingEndTime = false
+                                showTimePicker = true
+                            },
                             modifier = Modifier.weight(1f)
                         ) {
                             val timeText = startTime?.format(
-                                DateTimeFormatter.ofPattern("h:mm a")
-                            ) ?: "시작 시간"
-                            Icon(
-                                Icons.Filled.Schedule,
-                                contentDescription = "시작 시간 설정",
-                                tint = MaterialTheme.colorScheme.primary
+                                DateTimeFormatter.ofPattern("a h:mm")
+                            ) ?: "Start Time"
+                            Text(
+                                timeText,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(timeText)
                         }
 
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("~")
+                        Text(
+                            "~",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
 
                         TextButton(
-                            onClick = { pickingEndTime = true; showTimePicker = true },
+                            onClick = {
+                                pickingEndTime = true
+                                showTimePicker = true
+                            },
                             modifier = Modifier.weight(1f)
                         ) {
                             val timeText = endTime?.format(
-                                DateTimeFormatter.ofPattern("h:mm a")
-                            ) ?: "마감 시간"
-                            Icon(
-                                Icons.Filled.Schedule,
-                                contentDescription = "마감 시간 설정",
-                                tint = MaterialTheme.colorScheme.primary
+                                DateTimeFormatter.ofPattern("a h:mm")
+                            ) ?: "End Time"
+                            Text(
+                                timeText,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(timeText)
                         }
 
                         if (startTime != null || endTime != null) {
-                            IconButton(onClick = { startTime = null; endTime = null }) {
+                            IconButton(onClick = {
+                                startTime = null
+                                endTime = null
+                            }) {
                                 Icon(
                                     Icons.Filled.Close,
-                                    contentDescription = "시간 지우기",
+                                    contentDescription = "Clear Time",
                                     tint = Color.Gray
                                 )
                             }
@@ -256,22 +335,36 @@ fun AddTaskDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) { Text("취소") }
+                    TextButton(onClick = onDismiss) {
+                        Text(
+                            "Cancel",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
+                            // ★ 저장 직전에 endDate가 없으면 startDate로 채워서 전달
+                            val finalEndDate = endDate ?: startDate
                             onAddTask(
                                 taskTitle,
                                 taskDetails,
                                 startTime,
                                 endTime,
                                 startDate,
-                                endDate
+                                finalEndDate
                             )
                         },
                         enabled = isAddButtonEnabled
                     ) {
-                        Text("추가")
+                        Text(
+                            "Add",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                 }
             }

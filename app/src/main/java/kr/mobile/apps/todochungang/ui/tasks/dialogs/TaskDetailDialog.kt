@@ -1,5 +1,6 @@
 package kr.mobile.apps.todochungang.ui.tasks.dialogs
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,8 +9,9 @@ import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,36 +45,65 @@ fun TaskDetailDialog(
     viewModel: TasksViewModel,
     onDismiss: () -> Unit,
     onDeleteTask: () -> Unit,
-    onToggleCompleted: (Boolean) -> Unit
+    onToggleCompleted: (Boolean) -> Unit  // kept for compatibility
 ) {
     var currentTitle by remember { mutableStateOf(task.title) }
     var currentDetails by remember { mutableStateOf(task.details) }
 
     var currentStartDate by remember { mutableStateOf(task.startDate) }
-    var currentEndDate by remember { mutableStateOf(task.endDate) }
+    var currentEndDate by remember { mutableStateOf(task.endDate ?: task.startDate) }
     var currentStartTime by remember { mutableStateOf(task.startTime) }
     var currentEndTime by remember { mutableStateOf(task.endTime) }
 
     var isDatePickerShowing by remember { mutableStateOf(false) }
+    var pickingEndDate by remember { mutableStateOf(false) }
+
     var isTimePickerShowing by remember { mutableStateOf(false) }
     var pickingEndTime by remember { mutableStateOf(false) }
+
     var isDetailsExpanded by remember { mutableStateOf(task.details.isNotBlank()) }
 
-    val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy. M . d") }
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy.MM.dd") }
 
+    // Date picker (Start / End 구분)
     if (isDatePickerShowing) {
+        val initialDate = if (pickingEndDate) {
+            currentEndDate ?: currentStartDate ?: LocalDate.now()
+        } else {
+            currentStartDate ?: currentEndDate ?: LocalDate.now()
+        }
+
         TaskDatePickerDialog(
-            initialDate = currentStartDate ?: LocalDate.now(),
-            onDateSelected = { newDate -> currentStartDate = newDate },
+            initialDate = initialDate,
+            onDateSelected = { newDate ->
+                if (pickingEndDate) {
+                    currentEndDate = newDate
+                    // end < start 인 경우 start 를 end 로 맞춰주기
+                    if (currentStartDate != null && newDate.isBefore(currentStartDate)) {
+                        currentStartDate = newDate
+                    }
+                } else {
+                    currentStartDate = newDate
+                    // end 가 없거나 start 가 더 뒤라면 end 를 start 로 맞추기
+                    if (currentEndDate == null || newDate.isAfter(currentEndDate)) {
+                        currentEndDate = newDate
+                    }
+                }
+            },
             onDismiss = { isDatePickerShowing = false }
         )
     }
 
+    // Time picker (Start / End 구분)
     if (isTimePickerShowing) {
         TaskTimePickerDialog(
             initialTime = if (pickingEndTime) currentEndTime else currentStartTime,
             onTimeSelected = { newTime ->
-                if (pickingEndTime) currentEndTime = newTime else currentStartTime = newTime
+                if (pickingEndTime) {
+                    currentEndTime = newTime
+                } else {
+                    currentStartTime = newTime
+                }
             },
             onDismiss = { isTimePickerShowing = false }
         )
@@ -80,13 +111,20 @@ fun TaskDetailDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            border = BorderStroke(1.dp, Color(0xFFCCCCCC))
         ) {
             Column(
                 modifier = Modifier.padding(24.dp)
             ) {
-                // 제목 + 삭제 버튼
+                // Title + delete button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -95,48 +133,35 @@ fun TaskDetailDialog(
                     OutlinedTextField(
                         value = currentTitle,
                         onValueChange = { currentTitle = it },
-                        label = { Text("할 일 제목") },
+                        label = { Text("Task Title") },
                         singleLine = true,
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = 8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                            disabledContainerColor = MaterialTheme.colorScheme.surface,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black,
+                            focusedLabelColor = Color.Black,
+                            unfocusedLabelColor = Color(0xFF9CA3AF),
+                            focusedBorderColor = Color.Black,
+                            unfocusedBorderColor = Color(0xFFDDDDDD),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
                         )
                     )
                     IconButton(onClick = onDeleteTask) {
                         Icon(
                             Icons.Filled.Delete,
-                            contentDescription = "할 일 삭제",
+                            contentDescription = "Delete Task",
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-                // 완료 체크
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .offset(x = (-8).dp)
-                        .padding(bottom = 12.dp)
-                ) {
-                    Checkbox(
-                        checked = task.isCompleted,
-                        onCheckedChange = onToggleCompleted
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (task.isCompleted) "완료됨" else "미완료",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = if (task.isCompleted) Color.Gray else Color.Black
-                    )
-                }
-
-                // 날짜
+                // Date section
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.Start,
@@ -147,10 +172,18 @@ fun TaskDetailDialog(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         TextButton(
-                            onClick = { isDatePickerShowing = true },
-                            modifier = Modifier.weight(1f)
+                            onClick = {
+                                pickingEndDate = false
+                                isDatePickerShowing = true
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.Black
+                            )
                         ) {
-                            Text(text = currentStartDate?.format(dateFormatter) ?: "시작일 설정")
+                            Text(
+                                text = currentStartDate?.format(dateFormatter) ?: "Set Start Date"
+                            )
                         }
 
                         Spacer(modifier = Modifier.width(8.dp))
@@ -158,26 +191,42 @@ fun TaskDetailDialog(
                         Spacer(modifier = Modifier.width(8.dp))
 
                         TextButton(
-                            onClick = { isDatePickerShowing = true },
-                            modifier = Modifier.weight(1f)
+                            onClick = {
+                                pickingEndDate = true
+                                isDatePickerShowing = true
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.Black
+                            )
                         ) {
-                            Text(text = currentEndDate?.format(dateFormatter) ?: "마감일 설정")
+                            Text(
+                                text = currentEndDate?.format(dateFormatter) ?: "Set End Date"
+                            )
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 시간
+                // Time section
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = { pickingEndTime = false; isTimePickerShowing = true }) {
+                    TextButton(
+                        onClick = {
+                            pickingEndTime = false
+                            isTimePickerShowing = true
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color.Black
+                        )
+                    ) {
                         val startTimeText = currentStartTime?.format(
                             DateTimeFormatter.ofPattern("a h:mm")
-                        ) ?: "시작 시간"
+                        ) ?: "Start Time"
                         Icon(
                             Icons.Filled.Schedule,
-                            contentDescription = "시작 시간 설정",
-                            tint = MaterialTheme.colorScheme.primary
+                            contentDescription = "Set Start Time",
+                            tint = Color.Black
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(startTimeText)
@@ -187,24 +236,35 @@ fun TaskDetailDialog(
                     Text("~")
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    TextButton(onClick = { pickingEndTime = true; isTimePickerShowing = true }) {
+                    TextButton(
+                        onClick = {
+                            pickingEndTime = true
+                            isTimePickerShowing = true
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color.Black
+                        )
+                    ) {
                         val endTimeText = currentEndTime?.format(
                             DateTimeFormatter.ofPattern("a h:mm")
-                        ) ?: "마감 시간"
+                        ) ?: "End Time"
                         Icon(
                             Icons.Filled.Schedule,
-                            contentDescription = "마감 시간 설정",
-                            tint = MaterialTheme.colorScheme.primary
+                            contentDescription = "Set End Time",
+                            tint = Color.Black
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(endTimeText)
                     }
 
                     if (currentStartTime != null || currentEndTime != null) {
-                        IconButton(onClick = { currentStartTime = null; currentEndTime = null }) {
+                        IconButton(onClick = {
+                            currentStartTime = null
+                            currentEndTime = null
+                        }) {
                             Icon(
                                 Icons.Filled.Close,
-                                contentDescription = "시간 지우기",
+                                contentDescription = "Clear Time",
                                 tint = Color.Gray
                             )
                         }
@@ -213,37 +273,48 @@ fun TaskDetailDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 세부 정보
+                // Description
                 if (isDetailsExpanded) {
                     OutlinedTextField(
                         value = currentDetails,
                         onValueChange = { currentDetails = it },
                         label = if (currentDetails.isEmpty()) {
-                            { Text("세부 정보") }
+                            { Text("Task Description") }
                         } else null,
                         placeholder = if (currentDetails.isEmpty()) {
-                            { Text("세부 정보를 입력하세요...", color = Color.Gray) }
+                            { Text("Enter Task Description", color = Color.Gray) }
                         } else null,
                         leadingIcon = {
                             Icon(
                                 Icons.AutoMirrored.Filled.Notes,
-                                contentDescription = "세부 정보 아이콘"
+                                contentDescription = "Task Details Icon"
                             )
                         },
                         minLines = 3,
                         maxLines = 5,
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                            disabledContainerColor = MaterialTheme.colorScheme.surface
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black,
+                            focusedLabelColor = Color.Black,
+                            unfocusedLabelColor = Color(0xFF9CA3AF),
+                            focusedBorderColor = Color.Black,
+                            unfocusedBorderColor = Color(0xFFDDDDDD),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
                         )
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        TextButton(onClick = { isDetailsExpanded = false }) { Text("숨기기") }
+                        TextButton(
+                            onClick = { isDetailsExpanded = false },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.Black
+                            )
+                        ) { Text("Hide") }
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                 } else {
@@ -257,14 +328,14 @@ fun TaskDetailDialog(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.Notes,
-                            contentDescription = "세부 정보 아이콘",
+                            contentDescription = "Task Details",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
                             text = if (task.details.isNotBlank())
                                 task.details.take(20) + if (task.details.length > 20) "..." else ""
-                            else "세부 정보 추가",
+                            else "Add Task Description",
                             color = if (task.details.isNotBlank())
                                 Color.DarkGray
                             else
@@ -275,27 +346,38 @@ fun TaskDetailDialog(
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                // 저장 / 닫기
+                // Close (left) / Save (right)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = {
-                        viewModel.updateTaskDetails(
-                            task.id,
-                            currentDetails,
-                            currentStartDate,
-                            currentEndDate,
-                            currentStartTime,
-                            currentEndTime
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color.Black
                         )
-                        onDismiss()
-                    }) {
-                        Text("저장")
+                    ) {
+                        Text("Close")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(onClick = onDismiss) {
-                        Text("닫기")
+                    TextButton(
+                        onClick = {
+                            val finalEndDate = currentEndDate ?: currentStartDate
+                            viewModel.updateTaskDetails(
+                                task.id,
+                                currentDetails,
+                                currentStartDate,
+                                finalEndDate,
+                                currentStartTime,
+                                currentEndTime
+                            )
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color.Black
+                        )
+                    ) {
+                        Text("Save")
                     }
                 }
             }

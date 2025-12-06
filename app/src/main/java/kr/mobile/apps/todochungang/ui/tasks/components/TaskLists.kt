@@ -1,27 +1,18 @@
 package kr.mobile.apps.todochungang.ui.tasks.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,9 +43,9 @@ fun TaskList(
     tasks: List<Task>,
     onToggleComplete: (Task) -> Unit,
     onDeleteTask: (Task) -> Unit,
-    onTaskClick: (Task) -> Unit,
+    onTaskClick: (Task) -> Unit
 ) {
-    LazyColumn(modifier = Modifier.Companion.fillMaxWidth()) {
+    LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(tasks, key = { it.id }) { task ->
             TaskItem(
                 task = task,
@@ -62,7 +53,7 @@ fun TaskList(
                 onDeleteTask = onDeleteTask,
                 onTaskClick = onTaskClick
             )
-            HorizontalDivider()
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
@@ -74,72 +65,89 @@ fun TaskItem(
     onDeleteTask: (Task) -> Unit,
     onTaskClick: (Task) -> Unit
 ) {
-    Row(
-        modifier = Modifier.Companion
+    Card(
+        modifier = Modifier
             .fillMaxWidth()
-            .background(Color.Companion.White)
-            .clickable { onTaskClick(task) }
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.Companion.CenterVertically
+            .padding(horizontal = 10.dp)
+            .clickable { onTaskClick(task) },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, Color(0xFFDDDDDD))
     ) {
-        val checkboxIcon =
-            if (task.isCompleted) Icons.Filled.CheckCircle else Icons.Outlined.RadioButtonUnchecked
-        val checkboxColor =
-            if (task.isCompleted) MaterialTheme.colorScheme.primary else Color.Companion.Gray
-
-        IconButton(
-            onClick = { onToggleComplete(task) },
-            modifier = Modifier.Companion.size(48.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = checkboxIcon,
-                contentDescription = "Task 완료 상태",
-                tint = checkboxColor,
-                modifier = Modifier.Companion.size(24.dp)
-            )
-        }
+            val checkboxIcon =
+                if (task.isCompleted) Icons.Filled.CheckCircle else Icons.Outlined.RadioButtonUnchecked
 
-        Spacer(Modifier.Companion.width(8.dp))
+            val checkboxColor =
+                if (task.isCompleted) MaterialTheme.colorScheme.primary else Color.Gray
 
-        Column(modifier = Modifier.Companion.weight(1f)) {
-            Text(
-                text = task.title.replace('\n', ' '),
-                modifier = Modifier.Companion.fillMaxWidth(),
-                maxLines = 1,
-                overflow = TextOverflow.Companion.Ellipsis,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    textDecoration = if (task.isCompleted) TextDecoration.Companion.LineThrough else null,
-                    color = if (task.isCompleted) Color.Companion.Gray else Color.Companion.Black
+            IconButton(
+                onClick = { onToggleComplete(task) },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = checkboxIcon,
+                    contentDescription = "Toggle Task Complete",
+                    tint = checkboxColor,
+                    modifier = Modifier.size(22.dp)
                 )
-            )
+            }
 
-            val dateRangeText = formatTaskDateRange(task.startDate, task.endDate)
-            if (dateRangeText != null) {
-                Spacer(modifier = Modifier.Companion.height(2.dp))
-                Row(verticalAlignment = Alignment.Companion.CenterVertically) {
-                    Icon(
-                        Icons.Filled.Event,
-                        contentDescription = "기한 범위",
-                        modifier = Modifier.Companion.size(16.dp),
-                        tint = Color.Companion.DarkGray
-                    )
-                    Spacer(modifier = Modifier.Companion.width(4.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
-                    Text(
-                        text = dateRangeText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Companion.DarkGray
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = task.title.replace('\n', ' '),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = MaterialTheme.typography.titleMedium.fontWeight,
+                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                        color = if (task.isCompleted) Color.Gray else Color.Black
                     )
+                )
+
+                val dateRange = formatTaskDateRange(task.startDate, task.endDate)
+                if (dateRange != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Filled.Event,
+                            contentDescription = "Task Date Range",
+                            tint = Color(0xFF666666),
+                            modifier = Modifier.size(16.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        Text(
+                            text = dateRange,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF666666)
+                        )
+                    }
                 }
             }
-        }
 
-        IconButton(onClick = { onDeleteTask(task) }) {
-            Icon(
-                imageVector = Icons.Filled.Close,
-                contentDescription = "Task 삭제",
-                tint = Color.Companion.Red
-            )
+            IconButton(
+                onClick = { onDeleteTask(task) },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = "Delete Task",
+                    tint = Color(0xFFD9534F),
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
     }
 }

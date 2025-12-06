@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -22,9 +23,11 @@ fun EmptyStateMessage() {
         verticalArrangement = Arrangement.Top
     ) {
         Text(
-            text = "새로운 할 일을 추가해 보세요!",
-            style = MaterialTheme.typography.titleLarge,
-            color = Color.Gray
+            text = "Add New Task",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Gray
+            )
         )
     }
 }
@@ -49,7 +52,7 @@ fun LoadingFeedbackBox(taskTitle: String) {
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "'${taskTitle}' 추가 중...",
+                text = "'${taskTitle}'",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )

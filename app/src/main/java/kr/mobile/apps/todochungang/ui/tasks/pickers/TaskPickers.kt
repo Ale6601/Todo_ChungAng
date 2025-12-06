@@ -8,12 +8,14 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -46,14 +48,22 @@ fun TaskDatePickerDialog(
                         onDateSelected(newDate)
                     }
                     onDismiss()
-                }
+                },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.Black
+                )
             ) {
-                Text("확인")
+                Text("Set")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("취소")
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.Black
+                )
+            ) {
+                Text("Cancel")
             }
         }
     ) {
@@ -80,27 +90,35 @@ fun TaskTimePickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("시간 설정") },
+        title = { Text("Set Time") },
         confirmButton = {
             TextButton(
                 onClick = {
                     val selectedTime = LocalTime.of(timeState.hour, timeState.minute)
                     onTimeSelected(selectedTime)
                     onDismiss()
-                }
+                },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.Black
+                )
             ) {
-                Text("확인")
+                Text("Set")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("취소")
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.Black
+                )
+            ) {
+                Text("Cancel")
             }
         },
         text = {
             Box(
-                modifier = Modifier.Companion.fillMaxWidth(),
-                contentAlignment = Alignment.Companion.Center
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
                 TimeInput(state = timeState)
             }
