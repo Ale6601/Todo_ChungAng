@@ -59,7 +59,8 @@ class MainActivity : ComponentActivity() {
                         composable("calendar") {
                             AppScaffold(
                                 title = "Calendar",
-                                navController = navController
+                                navController = navController,
+                                onLogoutClick = { authViewModel.logout() }   // 🔥 여기
                             ) { modifier ->
                                 CalendarNavigator(
                                     modifier = modifier,
@@ -72,7 +73,8 @@ class MainActivity : ComponentActivity() {
                         composable("tasks") {
                             AppScaffold(
                                 title = "Tasks",
-                                navController = navController
+                                navController = navController,
+                                onLogoutClick = { authViewModel.logout() }   // 🔥 여기
                             ) { modifier ->
                                 TasksScreen(
                                     modifier = modifier
@@ -84,7 +86,8 @@ class MainActivity : ComponentActivity() {
                         composable("profile") {
                             AppScaffold(
                                 title = "Settings",
-                                navController = navController
+                                navController = navController,
+                                onLogoutClick = { authViewModel.logout() }   // 🔥 여기
                             ) { modifier ->
                                 Box(
                                     modifier = modifier.fillMaxSize(),

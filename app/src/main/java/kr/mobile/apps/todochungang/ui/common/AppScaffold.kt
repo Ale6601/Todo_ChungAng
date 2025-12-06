@@ -10,6 +10,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
@@ -17,6 +18,7 @@ import androidx.navigation.NavHostController
 fun AppScaffold(
     title: String,
     navController: NavHostController,
+    onLogoutClick: () -> Unit,                   // 🔹 추가
     content: @Composable (Modifier) -> Unit
 ) {
     Scaffold(
@@ -24,19 +26,26 @@ fun AppScaffold(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding()               // ✅ 상태바 만큼 내려주기
+                    .statusBarsPadding()
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.SemiBold
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp) // ✅ 위아래 여유
+                        .padding(horizontal = 16.dp, vertical = 18.dp)
                 )
                 Divider()
             }
         },
-        bottomBar = { BottomNavButtons(navController) }
+        bottomBar = {
+            BottomNavButtons(
+                navController = navController,
+                onLogoutClick = onLogoutClick     // ⬅ 여기서 전달
+            )
+        }
     ) { innerPadding ->
         content(Modifier.padding(innerPadding))
     }
