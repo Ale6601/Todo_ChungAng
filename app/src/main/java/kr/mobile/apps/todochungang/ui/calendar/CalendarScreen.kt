@@ -4,8 +4,17 @@ package kr.mobile.apps.todochungang.ui.calendar
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -52,8 +61,8 @@ fun CalendarScreen(
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(0.dp),   // 칸 사이 가로 여백 제거
+            verticalArrangement = Arrangement.spacedBy(0.dp),     // 칸 사이 세로 여백 제거
             userScrollEnabled = false
         ) {
             items(days) { day ->
@@ -101,7 +110,6 @@ private fun WeekdayRow() {
     }
 }
 
-
 private data class SpanSlice(val title: String, val position: SlicePos, val color: Color)
 private enum class SlicePos { START, MIDDLE, END, SINGLE }
 
@@ -112,70 +120,110 @@ private fun DayCell(
     eventsToday: List<SpanSlice>,
     isToday: Boolean
 ) {
-    val borderColor = if (isToday) MaterialTheme.colorScheme.primary else Color(0xFFE9E9EF)
+    val maxBars = 1
+    val remaining = (eventsToday.size - maxBars).coerceAtLeast(0)
+
+    // 기간 이벤트(START/MIDDLE/END)를 SINGLE 보다 우선해서 표시
+    val displayEvents = remember(eventsToday) {
+        eventsToday.sortedBy { slice ->
+            if (slice.position == SlicePos.SINGLE) 1 else 0
+        }
+    }
 
     Column(
         modifier = Modifier
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, borderColor, RoundedCornerShape(10.dp))
-            .padding(6.dp)
+            .padding(vertical = 6.dp)   // 가로 padding 0 → 바가 옆 칸과 이어져 보이게
     ) {
-        Text(
-            text = day.dayOfMonth.toString(),
-            style = MaterialTheme.typography.labelMedium,
-            color = when {
-                !inMonth -> Color(0xFF9AA0A6)
-                isToday -> MaterialTheme.colorScheme.primary
-                else -> Color.Unspecified
-            },
-            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
-        )
+        // 날짜 + +N 표시
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = day.dayOfMonth.toString(),
+                style = MaterialTheme.typography.labelMedium,
+                color = when {
+                    !inMonth -> Color(0xFF9AA0A6)
+                    isToday -> MaterialTheme.colorScheme.primary
+                    else -> Color.Unspecified
+                },
+                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
+            )
+
+            if (remaining > 0) {
+                Text(
+                    text = "+$remaining",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+            }
+        }
+
         Spacer(Modifier.height(4.dp))
 
-        val maxBars = 3
-        eventsToday.take(maxBars).forEach { slice ->
+        // 하루 최대 1개의 bar만 표시
+        displayEvents.take(maxBars).forEach { slice ->
             EventBar(slice)
-            Spacer(Modifier.height(4.dp))
-        }
-        val remaining = eventsToday.size - maxBars
-        if (remaining > 0) {
-            Text(
-                text = "+$remaining more",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray
-            )
         }
     }
 }
 
 @Composable
 private fun EventBar(slice: SpanSlice) {
-    val r = 8.dp
+
+    val r = 2.dp   // 살짝만 둥글게 (직사각형 느낌)
+    val endTrim = 6.dp  // 🔥 END 바를 줄일 양 (원하면 조절)
+
     val shape = when (slice.position) {
         SlicePos.SINGLE -> RoundedCornerShape(r)
         SlicePos.START -> RoundedCornerShape(topStart = r, bottomStart = r)
         SlicePos.MIDDLE -> RoundedCornerShape(0.dp)
         SlicePos.END -> RoundedCornerShape(topEnd = r, bottomEnd = r)
     }
-    Box(
-        modifier = Modifier
+
+    val baseColor = slice.color.copy(alpha = 0.18f)
+    val edgeColor = slice.color
+
+    // 🔥 END 바만 오른쪽을 줄이기 위해 Modifier 분리
+    val adjustedModifier = when (slice.position) {
+        SlicePos.END -> Modifier
             .fillMaxWidth()
-            .height(18.dp)
+            .padding(end = endTrim)  // 🔥 END 바를 살짝 짧게
+        else -> Modifier.fillMaxWidth()
+    }
+
+    Box(
+        modifier = adjustedModifier
+            .height(16.dp)
             .clip(shape)
-            .background(slice.color.copy(alpha = 0.9f))
-            .padding(horizontal = 6.dp),
+            .background(baseColor),
         contentAlignment = Alignment.CenterStart
     ) {
+        // 시작 스트립 표시
+        if (slice.position == SlicePos.START || slice.position == SlicePos.SINGLE) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(3.dp)
+                    .background(edgeColor)
+            )
+        }
+
         Text(
             text = slice.title,
+            modifier = Modifier.padding(start = 6.dp, end = 6.dp),
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White,
+            color = edgeColor.copy(alpha = 0.9f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
     }
 }
+
+
+
 
 /* ---------- Helpers ---------- */
 
@@ -187,8 +235,6 @@ private fun daysForMonthGrid(month: YearMonth): List<LocalDate> {
 
     return (0 until 42).map { firstCell.plusDays(it.toLong()) } // 6 rows
 }
-
-
 
 private fun eventsForDay(day: LocalDate, events: List<CalendarEvent>): List<SpanSlice> {
     val candidates = events.filter { !day.isBefore(it.start) && !day.isAfter(it.end) }
@@ -207,29 +253,29 @@ private fun eventsForDay(day: LocalDate, events: List<CalendarEvent>): List<Span
 @Preview(showBackground = true, widthDp = 800, heightDp = 500)
 @Composable
 private fun CalendarScreenPreview() {
-    val month = YearMonth.of(2025, 11)
+    val month = YearMonth.of(2025, 12)
     val sample = listOf(
         CalendarEvent(
             "1",
-            "Morning workout",
-            LocalDate.of(2025, 11, 11),
-            LocalDate.of(2025, 11, 11),
+            "123",
+            LocalDate.of(2025, 12, 9),
+            LocalDate.of(2025, 12, 10),
             Color(0xFFE74C3C)
         ),
         CalendarEvent(
             "2",
-            "Team meeting",
-            LocalDate.of(2025, 11, 11),
-            LocalDate.of(2025, 11, 14),
-            Color(0xFFE74C3C)
+            "하루짜리",
+            LocalDate.of(2025, 12, 9),
+            LocalDate.of(2025, 12, 9),
+            Color(0xFF5DADE2)
         ),
         CalendarEvent(
             "3",
-            "Review project documentation",
-            LocalDate.of(2025, 11, 11),
-            LocalDate.of(2025, 11, 11),
-            Color(0xFF5DADE2)
-        ),
+            "또 다른 작업",
+            LocalDate.of(2025, 12, 9),
+            LocalDate.of(2025, 12, 11),
+            Color(0xFF8E44AD)
+        )
     )
     MaterialTheme {
         Surface {

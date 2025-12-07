@@ -6,7 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -17,7 +22,6 @@ import com.google.firebase.auth.FirebaseUser
 import kr.mobile.apps.todochungang.ui.auth.AuthViewModel
 import kr.mobile.apps.todochungang.ui.auth.LoginScreen
 import kr.mobile.apps.todochungang.ui.calendar.CalendarNavigator
-import kr.mobile.apps.todochungang.ui.calendar.sampleEventsForMonth
 import kr.mobile.apps.todochungang.ui.common.AppScaffold
 import kr.mobile.apps.todochungang.ui.profile.ProfileScreen
 import kr.mobile.apps.todochungang.ui.tasks.TasksScreen
@@ -60,11 +64,10 @@ class MainActivity : ComponentActivity() {
                             AppScaffold(
                                 title = "Calendar",
                                 navController = navController,
-                                onLogoutClick = { authViewModel.logout() }   // 🔥 여기
+                                onLogoutClick = { authViewModel.logout() }
                             ) { modifier ->
                                 CalendarNavigator(
-                                    modifier = modifier,
-                                    eventsForMonth = { ym -> sampleEventsForMonth(ym) }
+                                    modifier = modifier
                                 )
                             }
                         }
@@ -74,7 +77,7 @@ class MainActivity : ComponentActivity() {
                             AppScaffold(
                                 title = "Tasks",
                                 navController = navController,
-                                onLogoutClick = { authViewModel.logout() }   // 🔥 여기
+                                onLogoutClick = { authViewModel.logout() }
                             ) { modifier ->
                                 TasksScreen(
                                     modifier = modifier
@@ -87,7 +90,7 @@ class MainActivity : ComponentActivity() {
                             AppScaffold(
                                 title = "Settings",
                                 navController = navController,
-                                onLogoutClick = { authViewModel.logout() }   // 🔥 여기
+                                onLogoutClick = { authViewModel.logout() }
                             ) { modifier ->
                                 Box(
                                     modifier = modifier.fillMaxSize(),
