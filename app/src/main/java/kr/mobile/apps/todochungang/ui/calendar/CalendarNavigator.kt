@@ -22,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,7 +34,9 @@ import java.util.Locale
 @Composable
 fun CalendarNavigator(
     modifier: Modifier = Modifier,
-    calendarViewModel: CalendarViewModel = viewModel()
+    calendarViewModel: CalendarViewModel = viewModel(),
+    weekStart: WeekStart,
+    backgroundColor: Color
 ) {
     val uiState by calendarViewModel.uiState.collectAsState()
 
@@ -104,7 +107,9 @@ fun CalendarNavigator(
             month = month,
             events = events,
             modifier = Modifier.fillMaxWidth(),
-            today = today
+            today = today,
+            weekStart = weekStart,
+            backgroundColor = backgroundColor
         )
     }
 }

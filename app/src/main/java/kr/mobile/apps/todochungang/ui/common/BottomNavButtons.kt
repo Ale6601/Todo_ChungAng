@@ -33,7 +33,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 @Composable
 fun BottomNavButtons(
     navController: NavController,
-    onLogoutClick: () -> Unit      // 🔹 추가: 로그아웃 콜백
+    onLogoutClick: () -> Unit
 ) {
     // Settings 드롭다운 상태
     val (settingsExpanded, setSettingsExpanded) = remember { mutableStateOf(false) }
@@ -133,7 +133,7 @@ fun BottomNavButtons(
                     text = { Text("Settings") },
                     onClick = {
                         setSettingsExpanded(false)
-                        // TODO: Settings 화면 이동 or 다이얼로그
+                        navController.navigate("settings")
                     }
                 )
 
