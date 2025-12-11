@@ -138,9 +138,10 @@ private fun DayCell(
         // 날짜 + +N 표시
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.Start,   // 🔥 왼쪽 정렬
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             Text(
                 text = day.dayOfMonth.toString(),
                 style = MaterialTheme.typography.labelMedium,
@@ -152,14 +153,17 @@ private fun DayCell(
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
             )
 
+            // 🔥 날짜 옆에 바로 붙게 설정
             if (remaining > 0) {
                 Text(
                     text = "+$remaining",
+                    modifier = Modifier.padding(start = 4.dp),   // 날짜와 간격
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
             }
         }
+
 
         Spacer(Modifier.height(4.dp))
 
