@@ -46,18 +46,31 @@ data class CalendarEvent(
     val color: Color = Color(0xFFE74C3C)
 )
 
+enum class WeekStart {
+    MONDAY,
+    SUNDAY
+}
+
 @Composable
 fun CalendarScreen(
     month: YearMonth,
     events: List<CalendarEvent>,
     modifier: Modifier = Modifier,
-    today: LocalDate = LocalDate.now()
+    today: LocalDate = LocalDate.now(),
+    weekStart: WeekStart = WeekStart.MONDAY,
+    backgroundColor: Color = Color.White
 ) {
-    Column(modifier = modifier.padding(16.dp)) {
-        WeekdayRow()
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(backgroundColor)
+            .padding(16.dp)
+    ) {
+        WeekdayRow(weekStart = weekStart)
         Spacer(Modifier.height(4.dp))
 
-        val days = remember(month) { daysForMonthGrid(month) }
+        val days = remember(month, weekStart) { daysForMonthGrid(month, weekStart) }
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
             modifier = Modifier.fillMaxWidth(),
@@ -78,16 +91,27 @@ fun CalendarScreen(
 }
 
 @Composable
-private fun WeekdayRow() {
-    val weekOrder = listOf(
-        DayOfWeek.MONDAY,
-        DayOfWeek.TUESDAY,
-        DayOfWeek.WEDNESDAY,
-        DayOfWeek.THURSDAY,
-        DayOfWeek.FRIDAY,
-        DayOfWeek.SATURDAY,
-        DayOfWeek.SUNDAY
-    )
+private fun WeekdayRow(weekStart: WeekStart) {
+    val weekOrder = when (weekStart) {
+        WeekStart.MONDAY -> listOf(
+            DayOfWeek.MONDAY,
+            DayOfWeek.TUESDAY,
+            DayOfWeek.WEDNESDAY,
+            DayOfWeek.THURSDAY,
+            DayOfWeek.FRIDAY,
+            DayOfWeek.SATURDAY,
+            DayOfWeek.SUNDAY
+        )
+        WeekStart.SUNDAY -> listOf(
+            DayOfWeek.SUNDAY,
+            DayOfWeek.MONDAY,
+            DayOfWeek.TUESDAY,
+            DayOfWeek.WEDNESDAY,
+            DayOfWeek.THURSDAY,
+            DayOfWeek.FRIDAY,
+            DayOfWeek.SATURDAY
+        )
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -231,11 +255,22 @@ private fun EventBar(slice: SpanSlice) {
 
 /* ---------- Helpers ---------- */
 
-private fun daysForMonthGrid(month: YearMonth): List<LocalDate> {
+private fun daysForMonthGrid(
+    month: YearMonth,
+    weekStart: WeekStart
+): List<LocalDate> {
     val firstOfMonth = month.atDay(1)
-    val dayOfWeek = firstOfMonth.dayOfWeek.value
-    val daysBack = dayOfWeek - DayOfWeek.MONDAY.value
-    val firstCell = firstOfMonth.minusDays(daysBack.toLong())
+
+    val firstDayOfWeek = when (weekStart) {
+        WeekStart.MONDAY -> DayOfWeek.MONDAY
+        WeekStart.SUNDAY -> DayOfWeek.SUNDAY
+    }
+
+    val dayOfWeekValue = firstOfMonth.dayOfWeek.value   // 1..7 (Mon..Sun)
+    val startValue = firstDayOfWeek.value               // 1 (Mon) or 7 (Sun)
+
+    val diff = (7 + (dayOfWeekValue - startValue)) % 7
+    val firstCell = firstOfMonth.minusDays(diff.toLong())
 
     return (0 until 42).map { firstCell.plusDays(it.toLong()) } // 6 rows
 }
@@ -285,7 +320,9 @@ private fun CalendarScreenPreview() {
         Surface {
             CalendarScreen(
                 month = month,
-                events = sample
+                events = sample,
+                weekStart = WeekStart.MONDAY,
+                backgroundColor = Color(0xFFE3F2FD)
             )
         }
     }
