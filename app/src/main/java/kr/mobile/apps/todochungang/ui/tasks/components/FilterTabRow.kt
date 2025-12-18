@@ -30,7 +30,7 @@ fun FilterTabRow(
 ) {
     val tabs = TaskFilter.entries.toTypedArray()
     val pillShape = RoundedCornerShape(999.dp)
-    val containerColor = Color(0xFFF3F4F6)   // 바깥 라운드 영역 색
+    val containerColor = Color(0xFFF3F4F6)   
 
     Surface(
         modifier = Modifier
@@ -61,7 +61,7 @@ fun FilterTabRow(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .padding(2.dp) // 바깥 라운드와 내용 사이 여백
+                        .padding(2.dp) 
                         .background(
                             color = if (selected) Color.White else Color.Transparent,
                             shape = pillShape

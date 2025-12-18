@@ -26,11 +26,11 @@ class CalendarViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(CalendarUiState())
     val uiState: StateFlow<CalendarUiState> = _uiState.asStateFlow()
 
-    // TasksRepository.tasks 가 Compose 상태일 가능성이 있어서 snapshotFlow 사용
+    
     private val tasksFlow = snapshotFlow { TasksRepository.tasks }
 
     init {
-        // Task 목록이나 현재 Month 가 바뀔 때마다 이벤트 다시 계산
+        
         viewModelScope.launch {
             combine(
                 tasksFlow,
@@ -64,7 +64,7 @@ class CalendarViewModel : ViewModel() {
             val end: LocalDate =
                 task.endDate ?: task.startDate ?: task.creationDate
 
-            // 현재 달과 전혀 겹치지 않는 Task 는 제외
+            
             if (end.isBefore(monthStart) || start.isAfter(monthEnd)) {
                 return@mapNotNull null
             }

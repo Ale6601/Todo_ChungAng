@@ -14,15 +14,14 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun AddTaskFab(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    modifier: Modifier = Modifier, onClick: () -> Unit
 ) {
     FloatingActionButton(
         onClick = onClick,
         modifier = modifier,
         shape = CircleShape,
-        containerColor = Color.White,   // ← 흰색 버튼
-        contentColor = MaterialTheme.colorScheme.primary,  // ← 파란색 아이콘 (테마 primary)
+        containerColor = Color.White,
+        contentColor = MaterialTheme.colorScheme.primary,
         elevation = FloatingActionButtonDefaults.elevation(
             defaultElevation = 8.dp
         )

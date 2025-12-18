@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kr.mobile.apps.todochungang.data.repository.AuthRepository
 import kr.mobile.apps.todochungang.utils.UiState
-import com.google.android.gms.auth.api.signin.GoogleSignIn
 
 class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -21,7 +20,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     val loginState: StateFlow<UiState<FirebaseUser>> = _loginState
 
     init {
-        // 앱 시작 시 이미 로그인된 유저가 있는지 체크
+
         val current = repoRunCurrentUser()
         if (current != null) {
             _loginState.value = UiState.Success(current)
@@ -62,20 +61,16 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             when (val result = repo.logout()) {
                 is UiState.Success -> {
-                    // 더 이상 로그인된 유저가 없다는 의미로 Error 상태 사용
+
                     _loginState.value = UiState.Error(IllegalStateException("Signed out"))
                 }
+
                 is UiState.Error -> {
                     _loginState.value = UiState.Error(result.throwable)
                 }
+
                 UiState.Loading -> Unit
             }
         }
     }
-
-    /**
-     * 기존 signOut()을 쓰고 있는 코드가 있을 수 있으니,
-     * 호환용으로 남겨둠. 내부에서는 새 logout()을 호출.
-     */
-    fun signOut() = logout()
 }

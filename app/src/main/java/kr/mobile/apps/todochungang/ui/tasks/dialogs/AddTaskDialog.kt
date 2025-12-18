@@ -74,7 +74,7 @@ fun AddTaskDialog(
 
     val isAddButtonEnabled = taskTitle.isNotBlank()
 
-    // ---------- Date picker ----------
+    
     if (showDatePicker) {
         val initialDateForPicker = if (pickingEndDate) endDate ?: startDate else startDate
         val dateState = rememberDatePickerState(
@@ -96,7 +96,7 @@ fun AddTaskDialog(
                             endDate = newDate
                         } else {
                             startDate = newDate
-                            // 시작일 바꿀 때, 아직 End가 없거나 더 이전이면 같이 맞춰줌
+                            
                             if (endDate == null || newDate.isAfter(endDate)) {
                                 endDate = newDate
                             }
@@ -123,7 +123,7 @@ fun AddTaskDialog(
         }
     }
 
-    // ---------- Time picker ----------
+    
     if (showTimePicker) {
         TaskTimePickerDialog(
             initialTime = if (pickingEndTime) endTime else startTime,
@@ -134,7 +134,7 @@ fun AddTaskDialog(
         )
     }
 
-    // ---------- Main dialog ----------
+    
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -213,7 +213,7 @@ fun AddTaskDialog(
                         DateTimeFormatter.ofPattern("M.d", Locale.KOREA)
                     }
 
-                    // Date
+                    
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TextButton(
                             onClick = {
@@ -248,7 +248,7 @@ fun AddTaskDialog(
                             },
                             modifier = Modifier.weight(1f)
                         ) {
-                            // ★ endDate가 없으면 startDate를 그대로 보여줌
+                            
                             val endForDisplay = endDate ?: startDate
                             Text(
                                 endForDisplay.format(dateFormatter),
@@ -262,7 +262,7 @@ fun AddTaskDialog(
                         }
                     }
 
-                    // Time
+                    
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TextButton(
                             onClick = {
@@ -345,7 +345,7 @@ fun AddTaskDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            // ★ 저장 직전에 endDate가 없으면 startDate로 채워서 전달
+                            
                             val finalEndDate = endDate ?: startDate
                             onAddTask(
                                 taskTitle,

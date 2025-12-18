@@ -50,7 +50,7 @@ fun CalendarNavigator(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left: previous year / previous month
+            
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { calendarViewModel.changeMonth(month.minusYears(1)) }) {
                     Icon(
@@ -66,7 +66,7 @@ fun CalendarNavigator(
                 }
             }
 
-            // Center: month name + year
+            
             Text(
                 text = month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
                     .replaceFirstChar {
@@ -76,7 +76,7 @@ fun CalendarNavigator(
                 fontWeight = FontWeight.SemiBold
             )
 
-            // Right: Today button + next month / next year
+            
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(
                     onClick = {

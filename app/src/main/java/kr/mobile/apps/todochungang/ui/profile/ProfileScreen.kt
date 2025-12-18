@@ -3,8 +3,8 @@ package kr.mobile.apps.todochungang.ui.profile
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
@@ -59,8 +59,7 @@ private fun ProfileCard(user: FirebaseUser) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
                 text = "Account information",
@@ -71,28 +70,23 @@ private fun ProfileCard(user: FirebaseUser) {
             Divider()
 
             InfoRow(
-                label = "Display name",
-                value = user.displayName ?: "—"
+                label = "Display name", value = user.displayName ?: "—"
             )
             InfoRow(
-                label = "Email",
-                value = user.email ?: "—"
+                label = "Email", value = user.email ?: "—"
             )
             InfoRow(
-                label = "User ID (UID)",
-                value = user.uid
+                label = "User ID (UID)", value = user.uid
             )
 
             val providerId = user.providerData.firstOrNull()?.providerId ?: "—"
             InfoRow(
-                label = "Provider",
-                value = providerId
+                label = "Provider", value = providerId
             )
 
             val phone = user.phoneNumber ?: "—"
             InfoRow(
-                label = "Phone",
-                value = phone
+                label = "Phone", value = phone
             )
         }
     }
@@ -100,8 +94,7 @@ private fun ProfileCard(user: FirebaseUser) {
 
 @Composable
 private fun InfoRow(
-    label: String,
-    value: String
+    label: String, value: String
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -112,8 +105,7 @@ private fun InfoRow(
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium
+            text = value, style = MaterialTheme.typography.bodyMedium
         )
     }
 }

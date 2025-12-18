@@ -1,7 +1,14 @@
 package kr.mobile.apps.todochungang.ui.common
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -32,13 +39,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
 fun BottomNavButtons(
-    navController: NavController,
-    onLogoutClick: () -> Unit
+    navController: NavController, onLogoutClick: () -> Unit
 ) {
-    // Settings 드롭다운 상태
+
     val (settingsExpanded, setSettingsExpanded) = remember { mutableStateOf(false) }
 
-    // 현재 route
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -51,7 +57,7 @@ fun BottomNavButtons(
             .padding(horizontal = 24.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Calendar
+
         BottomNavItem(
             label = "Calendar",
             icon = Icons.Filled.CalendarMonth,
@@ -62,7 +68,7 @@ fun BottomNavButtons(
             modifier = Modifier.weight(1f)
         )
 
-        // Tasks
+
         BottomNavItem(
             label = "Tasks",
             icon = Icons.Filled.TaskAlt,
@@ -73,20 +79,18 @@ fun BottomNavButtons(
             modifier = Modifier.weight(1f)
         )
 
-        // Settings + Dropdown
+
         Box(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center
+            modifier = Modifier.weight(1f), contentAlignment = Alignment.Center
         ) {
             BottomNavItem(
                 label = "Settings",
                 icon = Icons.Filled.Settings,
-                // profile 화면을 Settings 탭으로 간주
+
                 selected = currentRoute == "profile",
                 selectedColor = selectedColor,
                 unselectedColor = unselectedColor,
-                onClick = { setSettingsExpanded(!settingsExpanded) }
-            )
+                onClick = { setSettingsExpanded(!settingsExpanded) })
 
             DropdownMenu(
                 expanded = settingsExpanded,
@@ -96,63 +100,46 @@ fun BottomNavButtons(
                 containerColor = Color.White,
                 tonalElevation = 4.dp
             ) {
-                // 상단 헤더
+
                 Text(
-                    text = "My Account",
-                    style = MaterialTheme.typography.titleSmall.copy(
+                    text = "My Account", style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold
-                    ),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                    ), modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                 )
 
                 Divider()
 
-                // Profile
-                DropdownMenuItem(
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Person,
-                            contentDescription = "Profile"
-                        )
-                    },
-                    text = { Text("Profile") },
-                    onClick = {
-                        setSettingsExpanded(false)
-                        navController.navigate("profile")
-                    }
-                )
 
-                // Settings
-                DropdownMenuItem(
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Settings,
-                            contentDescription = "Settings"
-                        )
-                    },
-                    text = { Text("Settings") },
-                    onClick = {
-                        setSettingsExpanded(false)
-                        navController.navigate("settings")
-                    }
-                )
+                DropdownMenuItem(leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Person, contentDescription = "Profile"
+                    )
+                }, text = { Text("Profile") }, onClick = {
+                    setSettingsExpanded(false)
+                    navController.navigate("profile")
+                })
+
+
+                DropdownMenuItem(leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Settings, contentDescription = "Settings"
+                    )
+                }, text = { Text("Settings") }, onClick = {
+                    setSettingsExpanded(false)
+                    navController.navigate("settings")
+                })
 
                 Divider()
 
-                // 🔥 Logout
-                DropdownMenuItem(
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Logout,
-                            contentDescription = "Logout"
-                        )
-                    },
-                    text = { Text("Logout") },
-                    onClick = {
-                        setSettingsExpanded(false)
-                        onLogoutClick()        // ⬅ 여기서만 콜백 호출
-                    }
-                )
+
+                DropdownMenuItem(leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Logout, contentDescription = "Logout"
+                    )
+                }, text = { Text("Logout") }, onClick = {
+                    setSettingsExpanded(false)
+                    onLogoutClick()
+                })
             }
         }
     }

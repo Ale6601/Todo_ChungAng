@@ -48,29 +48,24 @@ fun SettingsScreen(
         )
 
         CalendarFormatCard(
-            weekStart = weekStart,
-            onWeekStartChange = onWeekStartChange
+            weekStart = weekStart, onWeekStartChange = onWeekStartChange
         )
 
         BackgroundColorCard(
-            selectedColor = backgroundColor,
-            onColorSelected = onBackgroundColorChange
+            selectedColor = backgroundColor, onColorSelected = onBackgroundColorChange
         )
     }
 }
 
 @Composable
 private fun CalendarFormatCard(
-    weekStart: WeekStart,
-    onWeekStartChange: (WeekStart) -> Unit
+    weekStart: WeekStart, onWeekStartChange: (WeekStart) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(2.dp)
+        modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = "Calendar format",
@@ -106,16 +101,13 @@ private fun CalendarFormatCard(
 
 @Composable
 private fun BackgroundColorCard(
-    selectedColor: Color,
-    onColorSelected: (Color) -> Unit
+    selectedColor: Color, onColorSelected: (Color) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(2.dp)
+        modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = "Calendar background color",
@@ -128,10 +120,7 @@ private fun BackgroundColorCard(
             )
 
             val colors = listOf(
-                Color(0xFFFFFFFF),
-                Color(0xFFFFF8E1),
-                Color(0xFFE3F2FD),
-                Color(0xFFE8F5E9)
+                Color(0xFFFFFFFF), Color(0xFFFFF8E1), Color(0xFFE3F2FD), Color(0xFFE8F5E9)
             )
 
             Row(
@@ -143,8 +132,7 @@ private fun BackgroundColorCard(
                         modifier = Modifier
                             .size(40.dp)
                             .background(
-                                color = color,
-                                shape = RoundedCornerShape(12.dp)
+                                color = color, shape = RoundedCornerShape(12.dp)
                             )
                             .clickable { onColorSelected(color) }
                             .borderIfSelected(color == selectedColor),
@@ -155,17 +143,16 @@ private fun BackgroundColorCard(
     }
 }
 
-// Small helper extension to draw a border around the selected color
+
 @Composable
 private fun Modifier.borderIfSelected(selected: Boolean): Modifier {
     return if (selected) {
         this.then(
-            Modifier
-                .border(
-                    width = 2.dp,
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(12.dp)
-                )
+            Modifier.border(
+                width = 2.dp,
+                color = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(12.dp)
+            )
         )
     } else {
         this

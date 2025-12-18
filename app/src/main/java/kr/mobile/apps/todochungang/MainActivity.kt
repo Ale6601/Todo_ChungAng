@@ -6,7 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,7 +64,6 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         startDestination = "calendar"
                     ) {
-                        // 🔹 Calendar 화면
                         composable("calendar") {
                             AppScaffold(
                                 title = "Calendar",
@@ -73,8 +77,6 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-
-                        // 🔹 Tasks 화면
                         composable("tasks") {
                             AppScaffold(
                                 title = "Tasks",
@@ -86,8 +88,6 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-
-                        // 🔹 Settings/Profile 화면
                         composable("profile") {
                             AppScaffold(
                                 title = "Profile",
@@ -102,12 +102,11 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
-
                         composable("settings") {
                             AppScaffold(
                                 title = "Settings",
                                 navController = navController,
-                                onLogoutClick = { authViewModel.logout() }   // 🔥 여기
+                                onLogoutClick = { authViewModel.logout() }
                             ) { innerPadding ->
                                 Box(
                                     modifier = Modifier

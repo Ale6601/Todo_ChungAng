@@ -24,7 +24,7 @@ fun LoginScreen(
 ) {
     val loginState by viewModel.loginState.collectAsState()
 
-    // Google Sign-In launcher
+    
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -32,7 +32,7 @@ fun LoginScreen(
         viewModel.handleGoogleActivityResult(task)
     }
 
-    // Success → main 화면 이동
+    
     LaunchedEffect(loginState) {
         if (loginState is UiState.Success) {
             onLoginSuccess()
@@ -50,7 +50,7 @@ fun LoginScreen(
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                // 앱 제목 (검정, 두껍게)
+                
                 Text(
                     text = "Todo ChungAng",
                     style = MaterialTheme.typography.titleLarge.copy(
@@ -61,7 +61,7 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                // 캘린더 아이콘 (검정)
+                
                 Icon(
                     imageVector = Icons.Filled.CalendarMonth,
                     contentDescription = null,
@@ -71,7 +71,7 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(32.dp))
 
-                // 🔥 Google 로그인 버튼 (흰/검 스타일)
+                
                 OutlinedButton(
                     onClick = { launcher.launch(viewModel.getGoogleIntent()) },
                     shape = RoundedCornerShape(24.dp),
@@ -92,14 +92,14 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                // 🔥 상태 메시지
+                
                 when (loginState) {
                     UiState.Loading -> CircularProgressIndicator(color = Color.Black)
 
                     is UiState.Error -> Text(
                         text = (loginState as UiState.Error).throwable.localizedMessage
                             ?: "Failed",
-                        color = Color(0xFFB00020), // error 색도 붉은톤
+                        color = Color(0xFFB00020), 
                         style = MaterialTheme.typography.bodySmall
                     )
 

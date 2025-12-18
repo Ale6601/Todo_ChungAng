@@ -18,35 +18,29 @@ import androidx.navigation.NavHostController
 fun AppScaffold(
     title: String,
     navController: NavHostController,
-    onLogoutClick: () -> Unit,                   // 🔹 추가
+    onLogoutClick: () -> Unit,
     content: @Composable (Modifier) -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            Column(
-                modifier = Modifier
+    Scaffold(topBar = {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+        ) {
+            Text(
+                text = title, style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                ), modifier = Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding()
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 18.dp)
-                )
-                Divider()
-            }
-        },
-        bottomBar = {
-            BottomNavButtons(
-                navController = navController,
-                onLogoutClick = onLogoutClick     // ⬅ 여기서 전달
+                    .padding(horizontal = 16.dp, vertical = 18.dp)
             )
+            Divider()
         }
-    ) { innerPadding ->
+    }, bottomBar = {
+        BottomNavButtons(
+            navController = navController, onLogoutClick = onLogoutClick
+        )
+    }) { innerPadding ->
         content(Modifier.padding(innerPadding))
     }
 }

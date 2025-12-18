@@ -74,8 +74,8 @@ fun CalendarScreen(
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(0.dp),   // 칸 사이 가로 여백 제거
-            verticalArrangement = Arrangement.spacedBy(0.dp),     // 칸 사이 세로 여백 제거
+            horizontalArrangement = Arrangement.spacedBy(0.dp),   
+            verticalArrangement = Arrangement.spacedBy(0.dp),     
             userScrollEnabled = false
         ) {
             items(days) { day ->
@@ -147,7 +147,7 @@ private fun DayCell(
     val maxBars = 1
     val remaining = (eventsToday.size - maxBars).coerceAtLeast(0)
 
-    // 기간 이벤트(START/MIDDLE/END)를 SINGLE 보다 우선해서 표시
+    
     val displayEvents = remember(eventsToday) {
         eventsToday.sortedBy { slice ->
             if (slice.position == SlicePos.SINGLE) 1 else 0
@@ -157,12 +157,12 @@ private fun DayCell(
     Column(
         modifier = Modifier
             .aspectRatio(1f)
-            .padding(vertical = 6.dp)   // 가로 padding 0 → 바가 옆 칸과 이어져 보이게
+            .padding(vertical = 6.dp)   
     ) {
-        // 날짜 + +N 표시
+        
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,   // 🔥 왼쪽 정렬
+            horizontalArrangement = Arrangement.Start,   
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -177,11 +177,11 @@ private fun DayCell(
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
             )
 
-            // 🔥 날짜 옆에 바로 붙게 설정
+            
             if (remaining > 0) {
                 Text(
                     text = "+$remaining",
-                    modifier = Modifier.padding(start = 4.dp),   // 날짜와 간격
+                    modifier = Modifier.padding(start = 4.dp),   
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
@@ -191,7 +191,7 @@ private fun DayCell(
 
         Spacer(Modifier.height(4.dp))
 
-        // 하루 최대 1개의 bar만 표시
+        
         displayEvents.take(maxBars).forEach { slice ->
             EventBar(slice)
         }
@@ -201,8 +201,8 @@ private fun DayCell(
 @Composable
 private fun EventBar(slice: SpanSlice) {
 
-    val r = 2.dp   // 살짝만 둥글게 (직사각형 느낌)
-    val endTrim = 6.dp  // 🔥 END 바를 줄일 양 (원하면 조절)
+    val r = 2.dp   
+    val endTrim = 6.dp  
 
     val shape = when (slice.position) {
         SlicePos.SINGLE -> RoundedCornerShape(r)
@@ -214,11 +214,11 @@ private fun EventBar(slice: SpanSlice) {
     val baseColor = slice.color.copy(alpha = 0.18f)
     val edgeColor = slice.color
 
-    // 🔥 END 바만 오른쪽을 줄이기 위해 Modifier 분리
+    
     val adjustedModifier = when (slice.position) {
         SlicePos.END -> Modifier
             .fillMaxWidth()
-            .padding(end = endTrim)  // 🔥 END 바를 살짝 짧게
+            .padding(end = endTrim)  
         else -> Modifier.fillMaxWidth()
     }
 
@@ -229,7 +229,7 @@ private fun EventBar(slice: SpanSlice) {
             .background(baseColor),
         contentAlignment = Alignment.CenterStart
     ) {
-        // 시작 스트립 표시
+        
         if (slice.position == SlicePos.START || slice.position == SlicePos.SINGLE) {
             Box(
                 modifier = Modifier
@@ -266,13 +266,13 @@ private fun daysForMonthGrid(
         WeekStart.SUNDAY -> DayOfWeek.SUNDAY
     }
 
-    val dayOfWeekValue = firstOfMonth.dayOfWeek.value   // 1..7 (Mon..Sun)
-    val startValue = firstDayOfWeek.value               // 1 (Mon) or 7 (Sun)
+    val dayOfWeekValue = firstOfMonth.dayOfWeek.value   
+    val startValue = firstDayOfWeek.value               
 
     val diff = (7 + (dayOfWeekValue - startValue)) % 7
     val firstCell = firstOfMonth.minusDays(diff.toLong())
 
-    return (0 until 42).map { firstCell.plusDays(it.toLong()) } // 6 rows
+    return (0 until 42).map { firstCell.plusDays(it.toLong()) } 
 }
 
 private fun eventsForDay(day: LocalDate, events: List<CalendarEvent>): List<SpanSlice> {

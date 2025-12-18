@@ -1,6 +1,12 @@
 package kr.mobile.apps.todochungang.ui.tasks
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
@@ -25,12 +31,12 @@ fun TaskNavigator(
     onPreviousDay: () -> Unit,
     onNextDay: () -> Unit
 ) {
-    // Saturday, December 6, 2025
+
     val dayFormatter = remember {
         DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.ENGLISH)
     }
 
-    // ⬇️ CalendarNavigator 와 똑같이 padding(16.dp)
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -41,7 +47,7 @@ fun TaskNavigator(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 왼쪽 그룹 (CalendarNavigator 의 <<, < 위치와 동일)
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onPreviousDay) {
                     Icon(
@@ -51,14 +57,14 @@ fun TaskNavigator(
                 }
             }
 
-            // 가운데 날짜 (CalendarNavigator 의 "December 2025"와 스타일 동일)
+
             Text(
                 text = selectedDate.format(dayFormatter),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
 
-            // 오른쪽 그룹 (CalendarNavigator 의 >, >> 위치와 동일 구조)
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onNextDay) {
                     Icon(
@@ -69,7 +75,7 @@ fun TaskNavigator(
             }
         }
 
-        // CalendarNavigator 도 헤더 아래 8dp 줌
+
         Spacer(Modifier.height(8.dp))
     }
 }
