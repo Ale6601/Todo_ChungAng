@@ -47,11 +47,6 @@ class CalendarViewModel : ViewModel() {
         _uiState.update { it.copy(currentMonth = month) }
     }
 
-    /**
-     * Task 리스트를 캘린더에서 사용할 CalendarEvent 리스트로 변환
-     * - startDate/endDate 가 없으면 creationDate 기준으로 1일짜리 이벤트로 처리
-     * - 현재 month 와 겹치는 일정만 남김
-     */
     private fun buildEventsForMonth(
         tasks: List<Task>,
         month: YearMonth

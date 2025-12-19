@@ -2,14 +2,7 @@ package kr.mobile.apps.todochungang.ui.tasks.dialogs
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -38,12 +31,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import kr.mobile.apps.todochungang.data.model.Task
 import kr.mobile.apps.todochungang.ui.tasks.TasksViewModel
 import kr.mobile.apps.todochungang.ui.tasks.pickers.TaskDatePickerDialog
 import kr.mobile.apps.todochungang.ui.tasks.pickers.TaskTimePickerDialog
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun TaskDetailDialog(
@@ -51,6 +45,7 @@ fun TaskDetailDialog(
     viewModel: TasksViewModel,
     onDismiss: () -> Unit,
     onDeleteTask: () -> Unit,
+    onToggleCompleted: (Boolean) -> Unit
 ) {
     var currentTitle by remember { mutableStateOf(task.title) }
     var currentDetails by remember { mutableStateOf(task.details) }
@@ -70,7 +65,6 @@ fun TaskDetailDialog(
 
     val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy.MM.dd") }
 
-
     if (isDatePickerShowing) {
         val initialDate = if (pickingEndDate) {
             currentEndDate ?: currentStartDate ?: LocalDate.now()
@@ -78,23 +72,24 @@ fun TaskDetailDialog(
             currentStartDate ?: currentEndDate ?: LocalDate.now()
         }
 
-        TaskDatePickerDialog(initialDate = initialDate, onDateSelected = { newDate ->
-            if (pickingEndDate) {
-                currentEndDate = newDate
-
-                if (currentStartDate != null && newDate.isBefore(currentStartDate)) {
-                    currentStartDate = newDate
-                }
-            } else {
-                currentStartDate = newDate
-
-                if (currentEndDate == null || newDate.isAfter(currentEndDate)) {
+        TaskDatePickerDialog(
+            initialDate = initialDate,
+            onDateSelected = { newDate ->
+                if (pickingEndDate) {
                     currentEndDate = newDate
+                    if (currentStartDate != null && newDate.isBefore(currentStartDate)) {
+                        currentStartDate = newDate
+                    }
+                } else {
+                    currentStartDate = newDate
+                    if (currentEndDate == null || newDate.isAfter(currentEndDate)) {
+                        currentEndDate = newDate
+                    }
                 }
-            }
-        }, onDismiss = { isDatePickerShowing = false })
+            },
+            onDismiss = { isDatePickerShowing = false }
+        )
     }
-
 
     if (isTimePickerShowing) {
         TaskTimePickerDialog(
@@ -106,7 +101,8 @@ fun TaskDetailDialog(
                     currentStartTime = newTime
                 }
             },
-            onDismiss = { isTimePickerShowing = false })
+            onDismiss = { isTimePickerShowing = false }
+        )
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -124,7 +120,6 @@ fun TaskDetailDialog(
             Column(
                 modifier = Modifier.padding(24.dp)
             ) {
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -160,7 +155,6 @@ fun TaskDetailDialog(
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -209,13 +203,13 @@ fun TaskDetailDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TextButton(
                         onClick = {
                             pickingEndTime = false
                             isTimePickerShowing = true
-                        }, colors = ButtonDefaults.textButtonColors(
+                        },
+                        colors = ButtonDefaults.textButtonColors(
                             contentColor = Color.Black
                         )
                     ) {
@@ -239,7 +233,8 @@ fun TaskDetailDialog(
                         onClick = {
                             pickingEndTime = true
                             isTimePickerShowing = true
-                        }, colors = ButtonDefaults.textButtonColors(
+                        },
+                        colors = ButtonDefaults.textButtonColors(
                             contentColor = Color.Black
                         )
                     ) {
@@ -270,7 +265,6 @@ fun TaskDetailDialog(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-
 
                 if (isDetailsExpanded) {
                     OutlinedTextField(
@@ -304,7 +298,8 @@ fun TaskDetailDialog(
                         )
                     )
                     Row(
-                        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
                     ) {
                         TextButton(
                             onClick = { isDetailsExpanded = false },
@@ -321,7 +316,8 @@ fun TaskDetailDialog(
                             .clip(RoundedCornerShape(8.dp))
                             .clickable { isDetailsExpanded = true }
                             .padding(horizontal = 12.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically) {
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
                             Icons.AutoMirrored.Filled.Notes,
                             contentDescription = "Task Details",
@@ -329,22 +325,26 @@ fun TaskDetailDialog(
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                            text = if (task.details.isNotBlank()) task.details.take(20) + if (task.details.length > 20) "..." else ""
+                            text = if (task.details.isNotBlank())
+                                task.details.take(20) + if (task.details.length > 20) "..." else ""
                             else "Add Task Description",
-                            color = if (task.details.isNotBlank()) Color.DarkGray
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (task.details.isNotBlank())
+                                Color.DarkGray
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                 }
 
-
                 Row(
-                    modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(
-                        onClick = onDismiss, colors = ButtonDefaults.textButtonColors(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(
                             contentColor = Color.Black
                         )
                     ) {
@@ -363,7 +363,8 @@ fun TaskDetailDialog(
                                 currentEndTime
                             )
                             onDismiss()
-                        }, colors = ButtonDefaults.textButtonColors(
+                        },
+                        colors = ButtonDefaults.textButtonColors(
                             contentColor = Color.Black
                         )
                     ) {

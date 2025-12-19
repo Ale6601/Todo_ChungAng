@@ -50,12 +50,6 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /**
-     * 새로 추가한 logout 흐름
-     * - GoogleSignIn + Firebase 둘 다 로그아웃
-     * - 성공 시: loginState를 "Not logged in" 상태로 만들어서
-     *   화면에서 로그인 화면으로 보내기 좋게 처리
-     */
     fun logout() {
         _loginState.value = UiState.Loading
         viewModelScope.launch {
